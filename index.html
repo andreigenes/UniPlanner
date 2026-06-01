@@ -218,7 +218,7 @@
       <div class="nav-sub" id="app-sub"></div>
     </div>
     <div style="position:relative">
-      <div id="app-avatar" style="cursor:pointer" onclick="toggleProfileMenu()">?</div>
+      <div id="app-avatar" class="avatar" style="cursor:pointer" onclick="toggleProfileMenu()">?</div>
       <div id="profile-menu" style="display:none;position:absolute;right:0;top:44px;background:var(--bg-primary);border:0.5px solid var(--border-md);border-radius:var(--radius-lg);min-width:180px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.15);overflow:hidden">
         <div style="padding:14px 16px;border-bottom:0.5px solid var(--border)">
           <div id="menu-name" style="font-size:14px;font-weight:600;color:var(--text-primary)"></div>
@@ -245,7 +245,7 @@
           <!-- Avatar -->
           <div style="padding:20px 16px;display:flex;align-items:center;gap:16px;border-bottom:0.5px solid var(--border)">
             <div style="position:relative">
-              <div id="settings-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--info-bg);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--info-text);overflow:hidden"></div>
+              <div id="settings-avatar" class="avatar" style="width:64px;height:64px;font-size:22px;font-weight:700;cursor:default"></div>
               <label style="position:absolute;bottom:0;right:0;width:22px;height:22px;background:var(--text-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg-primary)">
                 <i class="ti ti-camera" style="font-size:11px;color:var(--bg-primary)"></i>
                 <input type="file" id="avatar-upload" accept="image/*" style="display:none">
@@ -540,7 +540,6 @@ function initAppUI(){
   loadPdfs();
   const sf=profile.faculty.replace('Facultatea de ','').replace('Facultatea ','');
   document.getElementById('app-sub').textContent=sf.length>42?sf.slice(0,40)+'…':sf;
-  document.getElementById('app-avatar').textContent=profile.name.slice(0,2).toUpperCase();
   renderAll();
 }
 // PROFILE MENU
