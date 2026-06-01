@@ -800,14 +800,22 @@ document.getElementById('pdf-upload').onchange = async (e) => {
   await loadPdfs();
 };
 
-async function downloadPdfAsBase64(fileName) {
+async function extractTextFromPdf(fileName) {
   const { data, error } = await sb.storage.from('pdfs').download(fileName);
-  if (error) return null;
+  if (error) return '';
   const arrayBuffer = await data.arrayBuffer();
   const uint8 = new Uint8Array(arrayBuffer);
-  let binary = '';
-  for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
-  return btoa(binary);
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  const raw = decoder.decode(uint8);
+  // Extract readable text chunks
+  const chunks = raw.match(/[ -~
+]{5,}/g) || [];
+  const text = chunks
+    .filter(c => c.trim().split(/\s+/).length > 3)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text.slice(0, 6000);
 }
 
 document.getElementById('ai-gen').onclick = async () => {
@@ -824,29 +832,28 @@ document.getElementById('ai-gen').onclick = async () => {
   }
 
   wrap.style.display = '';
-
-  // Build content array with PDFs as base64 documents
-  const contentParts = [];
+  let combinedText = '';
 
   for (const name of selected) {
-    const shortName = name.replace(/^[^/]+\//, '');
-    out.textContent = `Downloading: ${shortName}...`;
-    const b64 = await downloadPdfAsBase64(name);
-    if (b64) {
-      contentParts.push({
-        type: 'document',
-        source: { type: 'base64', media_type: 'application/pdf', data: b64 },
-        title: shortName
-      });
-    }
+    const shortName = name.replace(/^[^\/]+\//, '');
+    out.textContent = `Reading: ${shortName}...`;
+    const text = await extractTextFromPdf(name);
+    if (text) combinedText += `\n\n--- ${shortName} ---\n${text}`;
   }
 
-  const tl = {summary:'a concise structured summary with bullet points',defs:'a list of key definitions and formulas, one per line',qa:'10 review questions with short answers',mindmap:'a mind-map structure in text format with main topic and subtopics'}[type];
+  if (extraNotes) combinedText += `\n\n--- Extra notes ---\n${extraNotes}`;
 
-  let prompt = `Based on the provided course material(s), generate ${tl}.`;
-  if (extraNotes) prompt += `\n\nAdditional notes:\n${extraNotes}`;
-  prompt += '\n\nReply with only the flashcard content, no preamble.';
-  contentParts.push({ type: 'text', text: prompt });
+  if (!combinedText.trim()) {
+    out.textContent = 'Could not extract text from PDFs. Try adding notes manually.';
+    return;
+  }
+
+  const tl = {
+    summary: 'a concise structured summary with bullet points',
+    defs: 'a list of key definitions and formulas, one per line',
+    qa: '10 review questions with short answers',
+    mindmap: 'a mind-map structure in text format with main topic and subtopics'
+  }[type];
 
   out.textContent = 'Generating flashcard...';
   try {
@@ -854,14 +861,16 @@ document.getElementById('ai-gen').onclick = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
         system: 'You are an academic assistant for university students. Generate clear, concise study flashcards in English based on the provided course materials.',
-        messages: [{ role: 'user', content: contentParts }]
+        max_tokens: 1500,
+        messages: [{
+          role: 'user',
+          content: `Based on these course materials:\n${combinedText}\n\nGenerate ${tl}. Reply with only the flashcard content, no preamble.`
+        }]
       })
     });
     const data = await resp.json();
-    if (data.error) { out.textContent = 'API error: ' + data.error.message; return; }
+    if (data.error) { out.textContent = 'Error: ' + (data.error.message || JSON.stringify(data.error)); return; }
     out.textContent = data.content?.[0]?.text || 'Error generating.';
   } catch(e) { out.textContent = 'Connection error: ' + e.message; }
 };
