@@ -807,16 +807,15 @@ async function extractTextFromPdf(fileName) {
   const uint8 = new Uint8Array(arrayBuffer);
   const decoder = new TextDecoder('utf-8', { fatal: false });
   const raw = decoder.decode(uint8);
-  // Extract readable text chunks
-  const chunks = raw.match(/[ -~
-
-]{5,}/g) || [];
-  const text = chunks
-    .filter(c => c.trim().split(' ').length > 3)
-    .join(' ')
-    .replace(/[ \t\n\r]+/g, ' ')
-    .trim();
-  return text.slice(0, 6000);
+  var result = '';
+  for (var i = 0; i < raw.length; i++) {
+    var c = raw.charCodeAt(i);
+    if ((c >= 32 && c <= 126) || c === 10 || c === 13) {
+      result += raw[i];
+    }
+  }
+  result = result.split(' ').filter(function(w){ return w.length > 1; }).join(' ');
+  return result.slice(0, 6000);
 }
 
 document.getElementById('ai-gen').onclick = async () => {
