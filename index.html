@@ -280,19 +280,36 @@
     </div>
 
     <div class="page-inner" id="pi-ai">
-      <div class="section-lbl">Paste your notes</div>
+
+      <div class="section-lbl">PDF Library</div>
       <div class="inner-card">
-        <textarea id="ai-input" placeholder="Paste lecture notes here... (e.g. RLC circuits consist of resistors, inductors and capacitors...)"></textarea>
-        <div class="row-field" style="margin-top:10px"><label>Card type</label>
+        <div style="margin-bottom:10px;font-size:13px;color:var(--text-secondary)">Upload your course PDFs — saved in your account.</div>
+        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;padding:9px 14px;background:var(--bg-secondary);border-radius:var(--radius-md);border:0.5px solid var(--border-md);font-size:13px;font-weight:500;color:var(--text-primary)">
+          <i class="ti ti-upload"></i> Upload PDFs
+          <input type="file" id="pdf-upload" accept=".pdf" multiple style="display:none">
+        </label>
+        <div id="pdf-uploading" style="display:none;font-size:12px;color:var(--text-secondary);margin-top:8px">Uploading...</div>
+        <div id="pdf-list" style="margin-top:12px"></div>
+      </div>
+
+      <div class="section-lbl">Generate flashcard</div>
+      <div class="inner-card">
+        <div style="margin-bottom:10px;font-size:13px;color:var(--text-secondary)">Select which PDFs to include, then generate.</div>
+        <div id="pdf-select-list" style="margin-bottom:12px"></div>
+        <div class="row-field"><label>Extra notes (optional)</label>
+          <textarea id="ai-input" placeholder="Paste extra notes here..."></textarea>
+        </div>
+        <div class="row-field" style="margin-top:4px"><label>Card type</label>
           <select id="ai-type">
             <option value="summary">Concise summary</option>
-            <option value="defs">Key definitions & formulas</option>
-            <option value="qa">10 Q&A review questions</option>
+            <option value="defs">Key definitions &amp; formulas</option>
+            <option value="qa">10 Q&amp;A review questions</option>
             <option value="mindmap">Mind-map structure (text)</option>
           </select>
         </div>
         <button class="btn-sm" id="ai-gen" style="margin-top:8px"><i class="ti ti-sparkles"></i> Generate flashcard</button>
       </div>
+
       <div id="ai-result-wrap" style="display:none">
         <div class="section-lbl">Generated card</div>
         <div class="ai-box" id="ai-output"></div>
@@ -404,6 +421,7 @@ async function loadData(){
 }
 function initAppUI(){
   document.getElementById('app-title').textContent=profile.name+"'s planner";
+  loadPdfs();
   const sf=profile.faculty.replace('Facultatea de ','').replace('Facultatea ','');
   document.getElementById('app-sub').textContent=sf.length>42?sf.slice(0,40)+'…':sf;
   document.getElementById('app-avatar').textContent=profile.name.slice(0,2).toUpperCase();
@@ -418,8 +436,10 @@ document.querySelectorAll('.bnav-btn').forEach(btn=>{
     document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.page-inner').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('pi-'+btn.dataset.pi).classList.add('active');
+    const pi = btn.dataset.pi;
+    document.getElementById('pi-'+pi).classList.add('active');
     renderAll();
+    if (pi === 'ai') loadPdfs();
   };
 });
 
@@ -489,14 +509,131 @@ document.getElementById('st-add').onclick=async()=>{
   const {data,error}=await sb.from('study_plans').insert({user_id:currentUser.id,subject,exam_date,difficulty}).select().single();
   btn.disabled=false;if(!error){S.study.push(data);document.getElementById('st-sub').value='';document.getElementById('st-date').value='';renderAll();}
 };
-document.getElementById('ai-gen').onclick=async()=>{
-  const text=document.getElementById('ai-input').value.trim();if(!text)return;
-  const type=document.getElementById('ai-type').value;const wrap=document.getElementById('ai-result-wrap');const out=document.getElementById('ai-output');
-  wrap.style.display='';out.textContent='Generating...';
-  const tl={summary:'a concise structured summary with bullet points',defs:'a list of key definitions and formulas, one per line',qa:'10 review questions with short answers',mindmap:'a mind-map structure in text format with main topic and subtopics'}[type];
-  try{const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'You are an academic assistant for university students. Generate clear, concise study flashcards in English.',messages:[{role:'user',content:`Based on these notes:\n\n${text}\n\nGenerate ${tl}. Reply with only the flashcard content, no preamble.`}]})});const data=await resp.json();out.textContent=data.content?.[0]?.text||'Error.';}catch(e){out.textContent='Connection error.';}
+// PDF LIBRARY
+let userPdfs = [];
+
+async function loadPdfs() {
+  if (!currentUser) return;
+  const { data, error } = await sb.storage.from('pdfs').list(currentUser.id + '/');
+  if (error) { console.error(error); return; }
+  userPdfs = data || [];
+  renderPdfList();
+}
+
+function renderPdfList() {
+  const list = document.getElementById('pdf-list');
+  const selectList = document.getElementById('pdf-select-list');
+  if (!userPdfs.length) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--text-tertiary)">No PDFs uploaded yet.</div>';
+    selectList.innerHTML = '<div style="font-size:13px;color:var(--text-tertiary)">Upload PDFs above to include them.</div>';
+    return;
+  }
+  list.innerHTML = userPdfs.map(f => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-file-type-pdf" style="color:#e74c3c"></i>${f.name.replace(/^[^/]+\//, '')}</div>
+      <button class="icon-btn" onclick="deletePdf('${f.name}')"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
+  selectList.innerHTML = '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Select PDFs to include:</div>' +
+    userPdfs.map(f => {
+      const name = f.name.replace(/^[^/]+\//, '');
+      return `<label style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px;cursor:pointer">
+        <input type="checkbox" class="pdf-checkbox" data-name="${f.name}" checked style="width:16px;height:16px"> ${name}
+      </label>`;
+    }).join('');
+}
+
+window.deletePdf = async (name) => {
+  await sb.storage.from('pdfs').remove([name]);
+  await loadPdfs();
 };
-document.getElementById('ai-copy').onclick=()=>{navigator.clipboard.writeText(document.getElementById('ai-output').textContent).then(()=>{const btn=document.getElementById('ai-copy');btn.innerHTML='<i class="ti ti-check"></i> Copied!';setTimeout(()=>btn.innerHTML='<i class="ti ti-copy"></i> Copy',2000);});};
+
+document.getElementById('pdf-upload').onchange = async (e) => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  const uploading = document.getElementById('pdf-uploading');
+  uploading.style.display = 'block';
+  for (const file of files) {
+    const path = currentUser.id + '/' + file.name;
+    await sb.storage.from('pdfs').upload(path, file, { upsert: true });
+  }
+  uploading.style.display = 'none';
+  e.target.value = '';
+  await loadPdfs();
+};
+
+async function readPdfText(fileName) {
+  const { data, error } = await sb.storage.from('pdfs').download(fileName);
+  if (error) return '';
+  const arrayBuffer = await data.arrayBuffer();
+  const uint8 = new Uint8Array(arrayBuffer);
+  // Extract raw text from PDF (basic extraction)
+  let text = '';
+  const decoder = new TextDecoder('utf-8', { fatal: false });
+  const raw = decoder.decode(uint8);
+  // Extract text between BT/ET blocks
+  const matches = raw.matchAll(/BT[\s\S]*?ET/g);
+  for (const m of matches) {
+    const inner = m[0].match(/\(([^)]+)\)|\[([^\]]+)\]/g) || [];
+    for (const chunk of inner) {
+      text += chunk.replace(/[\(\)\[\]]/g, '') + ' ';
+    }
+  }
+  // Fallback: extract printable ASCII chunks
+  if (text.trim().length < 100) {
+    const chunks = raw.match(/[\x20-\x7E]{4,}/g) || [];
+    text = chunks.filter(c => c.split(' ').length > 2).join(' ');
+  }
+  return text.slice(0, 8000);
+}
+
+document.getElementById('ai-gen').onclick = async () => {
+  const extraNotes = document.getElementById('ai-input').value.trim();
+  const type = document.getElementById('ai-type').value;
+  const wrap = document.getElementById('ai-result-wrap');
+  const out = document.getElementById('ai-output');
+
+  const selected = Array.from(document.querySelectorAll('.pdf-checkbox:checked')).map(cb => cb.dataset.name);
+  if (!selected.length && !extraNotes) {
+    out.textContent = 'Please select at least one PDF or add some notes.';
+    wrap.style.display = '';
+    return;
+  }
+
+  wrap.style.display = '';
+  out.textContent = selected.length ? `Reading ${selected.length} PDF(s)...` : 'Generating...';
+
+  let combinedText = '';
+  for (const name of selected) {
+    const shortName = name.replace(/^[^/]+\//, '');
+    out.textContent = `Reading: ${shortName}...`;
+    const text = await readPdfText(name);
+    combinedText += `\n\n--- ${shortName} ---\n${text}`;
+  }
+  if (extraNotes) combinedText += `\n\n--- Extra notes ---\n${extraNotes}`;
+
+  out.textContent = 'Generating flashcard...';
+  const tl = {summary:'a concise structured summary with bullet points',defs:'a list of key definitions and formulas, one per line',qa:'10 review questions with short answers',mindmap:'a mind-map structure in text format with main topic and subtopics'}[type];
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 2000,
+        system: 'You are an academic assistant for university students. Generate clear, concise study flashcards in English based on the provided course materials.',
+        messages: [{role:'user', content:`Based on these course materials:\n${combinedText}\n\nGenerate ${tl}. Reply with only the flashcard content, no preamble.`}]
+      })
+    });
+    const data = await resp.json();
+    out.textContent = data.content?.[0]?.text || 'Error generating.';
+  } catch(e) { out.textContent = 'Connection error. Please try again.'; }
+};
+
+document.getElementById('ai-copy').onclick = () => {
+  navigator.clipboard.writeText(document.getElementById('ai-output').textContent).then(() => {
+    const btn = document.getElementById('ai-copy');
+    btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i> Copy', 2000);
+  });
+};
 
 (async()=>{const {data:{session}}=await sb.auth.getSession();if(session){currentUser=session.user;await loadProfileAndGo();}})();
 </script>
