@@ -537,9 +537,12 @@ async function loadData(){
 }
 function initAppUI(){
   document.getElementById('app-title').textContent=profile.name+"'s planner";
-  loadPdfs();
   const sf=profile.faculty.replace('Facultatea de ','').replace('Facultatea ','');
   document.getElementById('app-sub').textContent=sf.length>42?sf.slice(0,40)+'…':sf;
+  document.getElementById('menu-name').textContent=profile.name;
+  document.getElementById('menu-email').textContent=currentUser.email||'';
+  updateAvatarDisplay('app-avatar', profile.name, profile.avatar_url);
+  loadPdfs();
   renderAll();
 }
 // PROFILE MENU
@@ -611,16 +614,17 @@ document.getElementById('avatar-upload').onchange = async (e) => {
   const { error: upErr } = await sb.storage.from('pdfs').upload(path, file, { upsert: true, contentType: file.type });
   if (upErr) { alert('Upload failed: ' + upErr.message); return; }
 
-  const { data } = sb.storage.from('pdfs').getPublicUrl(path);
-  // Use signed URL since bucket is private
-  const { data: signedData } = await sb.storage.from('pdfs').createSignedUrl(path, 60*60*24*365);
-  const avatarUrl = signedData?.signedUrl || null;
+  // Use signed URL (1 year) since bucket is private
+  const { data: signedData, error: signErr } = await sb.storage.from('pdfs').createSignedUrl(path, 60*60*24*365);
+  if (signErr || !signedData) { alert('Could not get image URL.'); return; }
+  const avatarUrl = signedData.signedUrl;
 
   const { error: dbErr } = await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', currentUser.id);
   if (!dbErr) {
     profile.avatar_url = avatarUrl;
     refreshAllAvatars();
-    updateAvatarDisplay('settings-avatar', profile.name, avatarUrl);
+  } else {
+    alert('Could not save avatar: ' + dbErr.message);
   }
   e.target.value = '';
 };
