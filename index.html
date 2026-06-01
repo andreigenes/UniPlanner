@@ -259,7 +259,13 @@
       <div class="section-lbl">Add event</div>
       <div class="inner-card">
         <div class="row-field"><label>Title</label><input type="text" id="cal-title" placeholder="e.g. Exam: Electronics"></div>
-        <div class="row-field"><label>Date</label><input type="date" id="cal-date"></div>
+        <div class="row-field"><label>Date</label>
+          <div style="display:grid;grid-template-columns:2fr 2fr 3fr;gap:6px">
+            <select id="cal-day"><option value="">Day</option></select>
+            <select id="cal-month"><option value="">Month</option></select>
+            <select id="cal-year"><option value="">Year</option></select>
+          </div>
+        </div>
         <div class="row-field"><label>Type</label><select id="cal-type"><option value="exam">Exam</option><option value="colloquium">Colloquium</option><option value="deadline">Deadline</option><option value="class">Class</option></select></div>
         <button class="btn-sm" id="cal-add"><i class="ti ti-plus"></i> Add event</button>
       </div>
@@ -271,7 +277,13 @@
       <div class="section-lbl">Plan a subject</div>
       <div class="inner-card">
         <div class="row-field"><label>Subject</label><input type="text" id="st-sub" placeholder="e.g. Digital Logic"></div>
-        <div class="row-field"><label>Exam date</label><input type="date" id="st-date"></div>
+        <div class="row-field"><label>Exam date</label>
+          <div style="display:grid;grid-template-columns:2fr 2fr 3fr;gap:6px">
+            <select id="st-day"><option value="">Day</option></select>
+            <select id="st-month"><option value="">Month</option></select>
+            <select id="st-year"><option value="">Year</option></select>
+          </div>
+        </div>
         <div class="row-field"><label>Difficulty</label><select id="st-diff"><option value="1">Easy</option><option value="2" selected>Medium</option><option value="3">Hard</option></select></div>
         <button class="btn-sm" id="st-add"><i class="ti ti-calculator"></i> Generate plan</button>
       </div>
@@ -498,16 +510,16 @@ document.getElementById('cr-add').onclick=async()=>{
   btn.disabled=false;if(!error){S.courses.push(data);document.getElementById('cr-name').value='';document.getElementById('cr-grade').value='';renderAll();}
 };
 document.getElementById('cal-add').onclick=async()=>{
-  const title=document.getElementById('cal-title').value.trim();const date=document.getElementById('cal-date').value;const type=document.getElementById('cal-type').value;
+  const title=document.getElementById('cal-title').value.trim();const date=getDateValue('cal');const type=document.getElementById('cal-type').value;
   if(!title||!date)return;const btn=document.getElementById('cal-add');btn.disabled=true;
   const {data,error}=await sb.from('events').insert({user_id:currentUser.id,title,date,type}).select().single();
-  btn.disabled=false;if(!error){S.events.push(data);document.getElementById('cal-title').value='';document.getElementById('cal-date').value='';renderAll();}
+  btn.disabled=false;if(!error){S.events.push(data);document.getElementById('cal-title').value='';resetDate('cal');renderAll();}
 };
 document.getElementById('st-add').onclick=async()=>{
-  const subject=document.getElementById('st-sub').value.trim();const exam_date=document.getElementById('st-date').value;const difficulty=parseInt(document.getElementById('st-diff').value);
+  const subject=document.getElementById('st-sub').value.trim();const exam_date=getDateValue('st');const difficulty=parseInt(document.getElementById('st-diff').value);
   if(!subject||!exam_date)return;const btn=document.getElementById('st-add');btn.disabled=true;
   const {data,error}=await sb.from('study_plans').insert({user_id:currentUser.id,subject,exam_date,difficulty}).select().single();
-  btn.disabled=false;if(!error){S.study.push(data);document.getElementById('st-sub').value='';document.getElementById('st-date').value='';renderAll();}
+  btn.disabled=false;if(!error){S.study.push(data);document.getElementById('st-sub').value='';resetDate('st');renderAll();}
 };
 // PDF LIBRARY
 let userPdfs = [];
@@ -634,6 +646,33 @@ document.getElementById('ai-copy').onclick = () => {
     setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i> Copy', 2000);
   });
 };
+
+// DATE DROPDOWNS INIT
+function initDateDropdowns() {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const currentYear = new Date().getFullYear();
+  ['cal','st'].forEach(prefix => {
+    const dayEl = document.getElementById(prefix+'-day');
+    const monEl = document.getElementById(prefix+'-month');
+    const yrEl  = document.getElementById(prefix+'-year');
+    for (let d=1; d<=31; d++) dayEl.add(new Option(d,String(d).padStart(2,'0')));
+    months.forEach((m,i) => monEl.add(new Option(m, String(i+1).padStart(2,'0'))));
+    for (let y=currentYear; y<=currentYear+3; y++) yrEl.add(new Option(y,y));
+  });
+}
+function getDateValue(prefix) {
+  const d = document.getElementById(prefix+'-day').value;
+  const m = document.getElementById(prefix+'-month').value;
+  const y = document.getElementById(prefix+'-year').value;
+  if (!d||!m||!y) return '';
+  return y+'-'+m+'-'+d;
+}
+function resetDate(prefix) {
+  document.getElementById(prefix+'-day').value='';
+  document.getElementById(prefix+'-month').value='';
+  document.getElementById(prefix+'-year').value='';
+}
+initDateDropdowns();
 
 (async()=>{const {data:{session}}=await sb.auth.getSession();if(session){currentUser=session.user;await loadProfileAndGo();}})();
 </script>
