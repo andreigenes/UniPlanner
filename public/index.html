@@ -396,6 +396,411 @@
     </div>
 
     <div class="page-inner" id="pi-ai">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;padding:40px 20px">
+        <div style="width:64px;height:64px;background:var(--bg-secondary);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:20px">
+          <i class="ti ti-sparkles" style="font-size:28px;color:var(--text-tertiary)"></i>
+        </div>
+        <div style="font-size:20px;font-weight:600;color:var(--text-primary);margin-bottom:8px">Coming soon</div>
+        <div style="font-size:14px;color:var(--text-secondary);max-width:260px;line-height:1.6">AI flashcard generation from your course PDFs is coming in the next update.</div>
+      </div>
+    </div>html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="UniPlanner">
+<meta name="theme-color" content="#ffffff">
+<title>UniPlanner</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary: #efefef;
+    --text-primary: #111111;
+    --text-secondary: #666666;
+    --text-tertiary: #999999;
+    --border: rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.2);
+    --accent: #378ADD;
+    --success-bg: #eaf3de; --success-text: #3b6d11;
+    --danger-bg: #fcebeb; --danger-text: #a32d2d;
+    --warning-bg: #faeeda; --warning-text: #854f0b;
+    --info-bg: #e6f1fb; --info-text: #185fa5;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #242424;
+      --bg-tertiary: #2e2e2e;
+      --text-primary: #f0f0f0;
+      --text-secondary: #aaaaaa;
+      --text-tertiary: #666666;
+      --border: rgba(255,255,255,0.1);
+      --border-md: rgba(255,255,255,0.2);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-tertiary); color: var(--text-primary); min-height: 100vh; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .center-wrap { padding: 32px 20px; max-width: 420px; margin: 0 auto; }
+  .logo { text-align: center; margin-bottom: 28px; }
+  .logo-icon { width: 56px; height: 56px; background: var(--info-bg); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .logo-icon i { font-size: 28px; color: var(--info-text); }
+  .logo h1 { font-size: 24px; font-weight: 600; color: var(--text-primary); }
+  .logo p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+  .card { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 24px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+  .field input, .field select, input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%; max-width: 100%; padding: 10px 12px; font-size: 15px; border: 0.5px solid var(--border-md); border-radius: var(--radius-md);
+    background: var(--bg-primary); color: var(--text-primary); outline: none; font-family: inherit; box-sizing: border-box;
+  }
+  input[type="date"] { -webkit-appearance: textfield; min-width: 0; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(55,138,221,0.15); }
+  .btn-full { width: 100%; padding: 13px; font-size: 15px; border-radius: var(--radius-md); border: none; background: var(--text-primary); color: var(--bg-primary); cursor: pointer; font-weight: 600; margin-top: 4px; font-family: inherit; }
+  .btn-full:hover { opacity: .87; }
+  .btn-full:disabled { opacity: .4; cursor: not-allowed; }
+  .step-indicator { display: flex; gap: 6px; justify-content: center; margin-bottom: 24px; }
+  .step-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-md); transition: all .2s; }
+  .step-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
+  .switch-link { text-align: center; margin-top: 16px; font-size: 14px; color: var(--text-secondary); cursor: pointer; }
+  .switch-link span { color: var(--accent); text-decoration: underline; }
+  .back-link { text-align: center; margin-top: 14px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+  .back-link span { color: var(--accent); text-decoration: underline; }
+  .err { background: var(--danger-bg); color: var(--danger-text); border-radius: var(--radius-md); padding: 10px 12px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .ok-msg { background: var(--success-bg); color: var(--success-text); border-radius: var(--radius-md); padding: 10px 12px; font-size: 13px; margin-bottom: 14px; display: none; }
+
+  /* APP */
+  #screen-app { display: none; flex-direction: column; min-height: 100vh; }
+  #screen-app.active { display: flex; }
+  .nav-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--bg-primary); border-bottom: 0.5px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .nav-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .nav-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--info-bg); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--info-text); }
+  .page-content { flex: 1; padding: 16px; overflow-y: auto; padding-bottom: 80px; }
+  .page-inner { display: none; }
+  .page-inner.active { display: block; }
+  .bottom-nav { display: flex; background: var(--bg-primary); border-top: 0.5px solid var(--border); padding: 8px 0 env(safe-area-inset-bottom, 4px); position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; }
+  .bnav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px; cursor: pointer; border: none; background: transparent; color: var(--text-tertiary); font-size: 10px; font-family: inherit; }
+  .bnav-btn i { font-size: 22px; }
+  .bnav-btn.active { color: var(--accent); }
+  .metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 16px; }
+  .metric { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; }
+  .metric-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 600; color: var(--text-primary); }
+  .inner-card { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 14px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+  .section-lbl { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; margin-top: 4px; }
+  .row-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .row-field label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+  .btn-sm { padding: 10px 16px; font-size: 14px; border-radius: var(--radius-md); border: none; background: var(--text-primary); color: var(--bg-primary); cursor: pointer; font-family: inherit; font-weight: 500; }
+  .btn-sm:hover { opacity: .87; }
+  .btn-sm:disabled { opacity: .4; cursor: not-allowed; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+  th { text-align: left; padding: 7px 8px; color: var(--text-secondary); font-weight: 600; border-bottom: 0.5px solid var(--border); }
+  td { padding: 9px 8px; border-bottom: 0.5px solid var(--border); color: var(--text-primary); word-break: break-word; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .b-ok { background: var(--success-bg); color: var(--success-text); }
+  .b-no { background: var(--danger-bg); color: var(--danger-text); }
+  .b-pend { background: var(--warning-bg); color: var(--warning-text); }
+  .b-info { background: var(--info-bg); color: var(--info-text); }
+  .progress-bar { height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width .3s; }
+  .event-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .event-date-box { min-width: 40px; text-align: center; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 4px 6px; }
+  .ev-day { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+  .ev-mon { font-size: 9px; color: var(--text-secondary); text-transform: uppercase; }
+  .study-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .ai-box { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 14px; font-size: 14px; color: var(--text-primary); line-height: 1.7; white-space: pre-wrap; min-height: 80px; }
+  textarea { min-height: 100px; resize: vertical; }
+  .empty-state { text-align: center; padding: 28px 0; font-size: 14px; color: var(--text-tertiary); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .icon-btn { background: transparent; border: none; cursor: pointer; color: var(--text-tertiary); padding: 4px; }
+  .icon-btn i { font-size: 16px; }
+  .menu-item { display:flex;align-items:center;gap:10px;width:100%;padding:13px 16px;background:transparent;border:none;font-size:14px;color:var(--text-primary);cursor:pointer;text-align:left;font-family:inherit; }
+  .menu-item:hover { background:var(--bg-secondary); }
+  .avatar { width:36px;height:36px;border-radius:50%;background:var(--info-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--info-text);overflow:hidden;flex-shrink:0; }
+  .avatar img { width:100%;height:100%;object-fit:cover; }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="screen active" id="screen-auth">
+  <div class="center-wrap">
+    <div class="logo">
+      <div class="logo-icon"><i class="ti ti-school"></i></div>
+      <h1>UniPlanner</h1>
+      <p>Your academic companion</p>
+    </div>
+
+    <div id="auth-login">
+      <div class="card">
+        <div class="err" id="login-err"></div>
+        <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"></div>
+        <button class="btn-full" id="btn-login">Sign in</button>
+      </div>
+      <div class="switch-link">Don't have an account? <span id="go-register">Create one</span></div>
+      <div class="switch-link" style="margin-top:8px"><span id="go-forgot">Forgot password?</span></div>
+    </div>
+
+    <div id="auth-register" style="display:none">
+      <div class="card">
+        <div class="err" id="reg-err"></div>
+        <div class="ok-msg" id="reg-ok"></div>
+        <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="field"><label>Password</label><input type="password" id="reg-pass" placeholder="min. 6 characters" autocomplete="new-password"></div>
+        <div class="field"><label>Confirm password</label><input type="password" id="reg-pass2" placeholder="••••••••" autocomplete="new-password"></div>
+        <button class="btn-full" id="btn-register">Create account</button>
+      </div>
+      <div class="switch-link">Already have an account? <span id="go-login">Sign in</span></div>
+    </div>
+
+    <div id="auth-forgot" style="display:none">
+      <div class="card">
+        <div class="err" id="forgot-err"></div>
+        <div class="ok-msg" id="forgot-ok"></div>
+        <div class="field"><label>Email</label><input type="email" id="forgot-email" placeholder="your@email.com"></div>
+        <button class="btn-full" id="btn-forgot">Send reset link</button>
+      </div>
+      <div class="back-link" id="go-login2"><span>Back to sign in</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="screen" id="screen-onboard">
+  <div class="center-wrap">
+    <div class="logo">
+      <div class="logo-icon"><i class="ti ti-school"></i></div>
+      <h1>Set up your profile</h1>
+      <p>Just once — synced everywhere</p>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot active" id="od0"></div>
+      <div class="step-dot" id="od1"></div>
+      <div class="step-dot" id="od2"></div>
+      <div class="step-dot" id="od3"></div>
+    </div>
+    <div class="card">
+      <div id="os0">
+        <div class="field"><label>City</label><select id="sel-city"><option value="">— Select city —</option></select></div>
+        <button class="btn-full" id="ob0">Continue</button>
+      </div>
+      <div id="os1" style="display:none">
+        <div class="field"><label>University</label><select id="sel-uni"><option value="">— Select university —</option></select></div>
+        <button class="btn-full" id="ob1">Continue</button>
+        <div class="back-link" id="obback0"><span>Back</span></div>
+      </div>
+      <div id="os2" style="display:none">
+        <div class="field"><label>Faculty</label><select id="sel-fac"><option value="">— Select faculty —</option></select></div>
+        <button class="btn-full" id="ob2">Continue</button>
+        <div class="back-link" id="obback1"><span>Back</span></div>
+      </div>
+      <div id="os3" style="display:none">
+        <div class="field"><label>Your name</label><input type="text" id="ob-name" placeholder="e.g. Alex" maxlength="30"></div>
+        <div class="field"><label>Year of study</label><select id="ob-year"><option value="1">Year 1</option><option value="2">Year 2</option><option value="3">Year 3</option><option value="4">Year 4</option><option value="5">Year 5</option><option value="6">Year 6</option></select></div>
+        <div class="err" id="ob-err"></div>
+        <button class="btn-full" id="ob3">Start using UniPlanner</button>
+        <div class="back-link" id="obback2"><span>Back</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="screen" id="screen-app">
+  <div class="nav-bar">
+    <div>
+      <div class="nav-title" id="app-title">UniPlanner</div>
+      <div class="nav-sub" id="app-sub"></div>
+    </div>
+    <div style="position:relative">
+      <div id="app-avatar" class="avatar" style="cursor:pointer" onclick="toggleProfileMenu()">?</div>
+      <div id="profile-menu" style="display:none;position:absolute;right:0;top:44px;background:var(--bg-primary);border:0.5px solid var(--border-md);border-radius:var(--radius-lg);min-width:180px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.15);overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:0.5px solid var(--border)">
+          <div id="menu-name" style="font-size:14px;font-weight:600;color:var(--text-primary)"></div>
+          <div id="menu-email" style="font-size:12px;color:var(--text-secondary);margin-top:2px"></div>
+        </div>
+        <button class="menu-item" onclick="openSettings()"><i class="ti ti-settings"></i> Settings</button>
+        <button class="menu-item" style="color:var(--danger-text)" onclick="doLogout()"><i class="ti ti-logout"></i> Sign out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div id="settings-page" style="display:none;position:fixed;inset:0;background:var(--bg-tertiary);z-index:200;overflow-y:auto">
+    <div style="max-width:480px;margin:0 auto;padding:0 0 40px">
+      <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-primary);border-bottom:0.5px solid var(--border);position:sticky;top:0;z-index:10">
+        <button class="icon-btn" onclick="closeSettings()"><i class="ti ti-arrow-left" style="font-size:20px"></i></button>
+        <span style="font-size:16px;font-weight:600">Settings</span>
+      </div>
+
+      <!-- PROFILE SECTION -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Profile</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <!-- Avatar -->
+          <div style="padding:20px 16px;display:flex;align-items:center;gap:16px;border-bottom:0.5px solid var(--border)">
+            <div style="position:relative">
+              <div id="settings-avatar" class="avatar" style="width:64px;height:64px;font-size:22px;font-weight:700;cursor:default"></div>
+              <label style="position:absolute;bottom:0;right:0;width:22px;height:22px;background:var(--text-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg-primary)">
+                <i class="ti ti-camera" style="font-size:11px;color:var(--bg-primary)"></i>
+                <input type="file" id="avatar-upload" accept="image/*" style="display:none">
+              </label>
+            </div>
+            <div>
+              <div id="settings-name" style="font-size:16px;font-weight:600;color:var(--text-primary)"></div>
+              <div id="settings-faculty" style="font-size:12px;color:var(--text-secondary);margin-top:2px;max-width:240px"></div>
+              <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px" id="settings-year"></div>
+            </div>
+          </div>
+          <!-- Name -->
+          <div style="padding:14px 16px;border-bottom:0.5px solid var(--border)">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Display name</div>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="settings-name-input" style="flex:1;padding:8px 10px;font-size:14px" placeholder="Your name">
+              <button class="btn-sm" id="btn-save-name" style="padding:8px 14px;font-size:13px">Save</button>
+            </div>
+          </div>
+          <!-- Email -->
+          <div style="padding:14px 16px">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Email</div>
+            <div id="settings-email-val" style="font-size:14px;color:var(--text-primary)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCOUNT SECTION -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Account</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <button class="menu-item" style="width:100%;border-radius:0" onclick="changePassword()"><i class="ti ti-lock"></i> Change password</button>
+          <button class="menu-item" style="width:100%;border-radius:0;color:var(--danger-text);border-top:0.5px solid var(--border)" onclick="doLogout()"><i class="ti ti-logout"></i> Sign out</button>
+        </div>
+      </div>
+
+      <!-- ACADEMIC SECTION -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Academic info</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text-secondary)">University</span>
+            <span id="settings-uni" style="font-size:13px;color:var(--text-primary);text-align:right;max-width:200px"></span>
+          </div>
+          <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text-secondary)">City</span>
+            <span id="settings-city" style="font-size:13px;color:var(--text-primary)"></span>
+          </div>
+          <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text-secondary)">Year of study</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <select id="settings-year-sel" style="font-size:13px;padding:4px 8px;width:auto">
+                <option value="1">Year 1</option><option value="2">Year 2</option><option value="3">Year 3</option><option value="4">Year 4</option><option value="5">Year 5</option><option value="6">Year 6</option>
+              </select>
+              <button class="btn-sm" id="btn-save-year" style="padding:6px 12px;font-size:12px">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APP INFO -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">App</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between">
+            <span style="font-size:13px;color:var(--text-secondary)">Version</span>
+            <span style="font-size:13px;color:var(--text-primary)">1.0.0</span>
+          </div>
+          <div style="padding:12px 16px;display:flex;justify-content:space-between">
+            <span style="font-size:13px;color:var(--text-secondary)">Built with</span>
+            <span style="font-size:13px;color:var(--text-primary)">Supabase + Claude AI</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="page-inner active" id="pi-dashboard">
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Weighted GPA</div><div class="metric-value" id="d-gpa">—</div></div>
+        <div class="metric"><div class="metric-label">Credits earned</div><div class="metric-value" id="d-credits">0/60</div></div>
+        <div class="metric"><div class="metric-label">Exams left</div><div class="metric-value" id="d-exams">0</div></div>
+        <div class="metric"><div class="metric-label">Study hrs/day</div><div class="metric-value" id="d-hrs">0h</div></div>
+      </div>
+      <div class="inner-card"><div class="card-title"><i class="ti ti-calendar"></i> Upcoming events</div><div id="dash-ev"></div></div>
+      <div class="inner-card"><div class="card-title"><i class="ti ti-chart-bar"></i> Credits progress</div><div id="dash-cr"></div></div>
+    </div>
+
+    <div class="page-inner" id="pi-credits">
+      <div class="section-lbl">Add course</div>
+      <div class="inner-card">
+        <div class="row-field"><label>Course name</label><input type="text" id="cr-name" placeholder="e.g. Signals & Systems"></div>
+        <div class="two-col">
+          <div class="row-field"><label>Credits</label><input type="number" id="cr-cred" min="1" max="12" value="5"></div>
+          <div class="row-field"><label>Grade (1–10)</label><input type="number" id="cr-grade" min="1" max="10" step="0.1" placeholder="—"></div>
+        </div>
+        <div class="row-field"><label>Semester</label><select id="cr-sem"><option value="1">Semester 1</option><option value="2">Semester 2</option></select></div>
+        <button class="btn-sm" id="cr-add"><i class="ti ti-plus"></i> Add course</button>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Weighted GPA</div><div class="metric-value" id="cr-gpa">—</div></div>
+        <div class="metric"><div class="metric-label">Total credits</div><div class="metric-value" id="cr-tot">0</div></div>
+      </div>
+      <div style="background:var(--bg-secondary);border-radius:var(--radius-md);padding:12px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:6px"><span>Progress toward 60 credits</span><span id="cr-prog-lbl">0 / 60</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="cr-prog-bar" style="width:0%"></div></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr><th style="width:38%">Course</th><th style="width:13%">Cr.</th><th style="width:14%">Grade</th><th style="width:23%">Status</th><th style="width:12%"></th></tr></thead><tbody id="cr-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <div class="page-inner" id="pi-calendar">
+      <div class="section-lbl">Add event</div>
+      <div class="inner-card">
+        <div class="row-field"><label>Title</label><input type="text" id="cal-title" placeholder="e.g. Exam: Electronics"></div>
+        <div class="row-field"><label>Date</label>
+          <div style="display:grid;grid-template-columns:2fr 2fr 3fr;gap:6px">
+            <select id="cal-day"><option value="">Day</option></select>
+            <select id="cal-month"><option value="">Month</option></select>
+            <select id="cal-year"><option value="">Year</option></select>
+          </div>
+        </div>
+        <div class="row-field"><label>Type</label><select id="cal-type"><option value="exam">Exam</option><option value="colloquium">Colloquium</option><option value="deadline">Deadline</option><option value="class">Class</option></select></div>
+        <button class="btn-sm" id="cal-add"><i class="ti ti-plus"></i> Add event</button>
+      </div>
+      <div class="section-lbl">Upcoming</div>
+      <div id="cal-list"></div>
+    </div>
+
+    <div class="page-inner" id="pi-study">
+      <div class="section-lbl">Plan a subject</div>
+      <div class="inner-card">
+        <div class="row-field"><label>Subject</label><input type="text" id="st-sub" placeholder="e.g. Digital Logic"></div>
+        <div class="row-field"><label>Exam date</label>
+          <div style="display:grid;grid-template-columns:2fr 2fr 3fr;gap:6px">
+            <select id="st-day"><option value="">Day</option></select>
+            <select id="st-month"><option value="">Month</option></select>
+            <select id="st-year"><option value="">Year</option></select>
+          </div>
+        </div>
+        <div class="row-field"><label>Difficulty</label><select id="st-diff"><option value="1">Easy</option><option value="2" selected>Medium</option><option value="3">Hard</option></select></div>
+        <button class="btn-sm" id="st-add"><i class="ti ti-calculator"></i> Generate plan</button>
+      </div>
+      <div class="section-lbl">Study plan</div>
+      <div id="st-list"></div>
+    </div>
+
+    <div class="page-inner" id="pi-ai">
 
       <div class="section-lbl">PDF Library</div>
       <div class="inner-card">
