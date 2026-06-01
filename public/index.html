@@ -809,11 +809,12 @@ async function extractTextFromPdf(fileName) {
   const raw = decoder.decode(uint8);
   // Extract readable text chunks
   const chunks = raw.match(/[ -~
-]{5,}/g) || [];
+
+]{5,}/g) || [];
   const text = chunks
-    .filter(c => c.trim().split(/\s+/).length > 3)
+    .filter(c => c.trim().split(' ').length > 3)
     .join(' ')
-    .replace(/\s+/g, ' ')
+    .replace(/[ \t\n\r]+/g, ' ')
     .trim();
   return text.slice(0, 6000);
 }
