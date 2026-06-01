@@ -1,1 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="UniPlanner">
+<meta name="theme-color" content="#ffffff">
+<title>UniPlanner</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary: #efefef;
+    --text-primary: #111111;
+    --text-secondary: #666666;
+    --text-tertiary: #999999;
+    --border: rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.2);
+    --accent: #378ADD;
+    --success-bg: #eaf3de; --success-text: #3b6d11;
+    --danger-bg: #fcebeb; --danger-text: #a32d2d;
+    --warning-bg: #faeeda; --warning-text: #854f0b;
+    --info-bg: #e6f1fb; --info-text: #185fa5;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #242424;
+      --bg-tertiary: #2e2e2e;
+      --text-primary: #f0f0f0;
+      --text-secondary: #aaaaaa;
+      --text-tertiary: #666666;
+      --border: rgba(255,255,255,0.1);
+      --border-md: rgba(255,255,255,0.2);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-tertiary); color: var(--text-primary); min-height: 100vh; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .center-wrap { padding: 32px 20px; max-width: 420px; margin: 0 auto; }
+  .logo { text-align: center; margin-bottom: 28px; }
+  .logo-icon { width: 56px; height: 56px; background: var(--info-bg); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .logo-icon i { font-size: 28px; color: var(--info-text); }
+  .logo h1 { font-size: 24px; font-weight: 600; color: var(--text-primary); }
+  .logo p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+  .card { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 24px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+  .field input, .field select, input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%; max-width: 100%; padding: 10px 12px; font-size: 15px; border: 0.5px solid var(--border-md); border-radius: var(--radius-md);
+    background: var(--bg-primary); color: var(--text-primary); outline: none; font-family: inherit; box-sizing: border-box;
+  }
+  input[type="date"] { -webkit-appearance: textfield; min-width: 0; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(55,138,221,0.15); }
+  .btn-full { width: 100%; padding: 13px; font-size: 15px; border-radius: var(--radius-md); border: none; background: var(--text-primary); color: var(--bg-primary); cursor: pointer; font-weight: 600; margin-top: 4px; font-family: inherit; }
+  .btn-full:hover { opacity: .87; }
+  .btn-full:disabled { opacity: .4; cursor: not-allowed; }
+  .step-indicator { display: flex; gap: 6px; justify-content: center; margin-bottom: 24px; }
+  .step-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-md); transition: all .2s; }
+  .step-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
+  .switch-link { text-align: center; margin-top: 16px; font-size: 14px; color: var(--text-secondary); cursor: pointer; }
+  .switch-link span { color: var(--accent); text-decoration: underline; }
+  .back-link { text-align: center; margin-top: 14px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+  .back-link span { color: var(--accent); text-decoration: underline; }
+  .err { background: var(--danger-bg); color: var(--danger-text); border-radius: var(--radius-md); padding: 10px 12px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .ok-msg { background: var(--success-bg); color: var(--success-text); border-radius: var(--radius-md); padding: 10px 12px; font-size: 13px; margin-bottom: 14px; display: none; }
 
+  /* APP */
+  #screen-app { display: none; flex-direction: column; min-height: 100vh; }
+  #screen-app.active { display: flex; }
+  .nav-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--bg-primary); border-bottom: 0.5px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .nav-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .nav-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--info-bg); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--info-text); }
+  .page-content { flex: 1; padding: 16px; overflow-y: auto; padding-bottom: 80px; }
+  .page-inner { display: none; }
+  .page-inner.active { display: block; }
+  .bottom-nav { display: flex; background: var(--bg-primary); border-top: 0.5px solid var(--border); padding: 8px 0 env(safe-area-inset-bottom, 4px); position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; }
+  .bnav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px; cursor: pointer; border: none; background: transparent; color: var(--text-tertiary); font-size: 10px; font-family: inherit; }
+  .bnav-btn i { font-size: 22px; }
+  .bnav-btn.active { color: var(--accent); }
+  .metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 16px; }
+  .metric { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; }
+  .metric-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 600; color: var(--text-primary); }
+  .inner-card { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 14px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+  .section-lbl { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; margin-top: 4px; }
+  .row-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .row-field label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+  .btn-sm { padding: 10px 16px; font-size: 14px; border-radius: var(--radius-md); border: none; background: var(--text-primary); color: var(--bg-primary); cursor: pointer; font-family: inherit; font-weight: 500; }
+  .btn-sm:hover { opacity: .87; }
+  .btn-sm:disabled { opacity: .4; cursor: not-allowed; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+  th { text-align: left; padding: 7px 8px; color: var(--text-secondary); font-weight: 600; border-bottom: 0.5px solid var(--border); }
+  td { padding: 9px 8px; border-bottom: 0.5px solid var(--border); color: var(--text-primary); word-break: break-word; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .b-ok { background: var(--success-bg); color: var(--success-text); }
+  .b-no { background: var(--danger-bg); color: var(--danger-text); }
+  .b-pend { background: var(--warning-bg); color: var(--warning-text); }
+  .b-info { background: var(--info-bg); color: var(--info-text); }
+  .progress-bar { height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width .3s; }
+  .event-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .event-date-box { min-width: 40px; text-align: center; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 4px 6px; }
+  .ev-day { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+  .ev-mon { font-size: 9px; color: var(--text-secondary); text-transform: uppercase; }
+  .study-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .ai-box { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 14px; font-size: 14px; color: var(--text-primary); line-height: 1.7; white-space: pre-wrap; min-height: 80px; }
+  textarea { min-height: 100px; resize: vertical; }
+  .empty-state { text-align: center; padding: 28px 0; font-size: 14px; color: var(--text-tertiary); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .icon-btn { background: transparent; border: none; cursor: pointer; color: var(--text-tertiary); padding: 4px; }
+  .icon-btn i { font-size: 16px; }
+  .menu-item { display:flex;align-items:center;gap:10px;width:100%;padding:13px 16px;background:transparent;border:none;font-size:14px;color:var(--text-primary);cursor:pointer;text-align:left;font-family:inherit; }
+  .menu-item:hover { background:var(--bg-secondary); }
+  .avatar { width:36px;height:36px;border-radius:50%;background:var(--info-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--info-text);overflow:hidden;flex-shrink:0; }
+  .avatar img { width:100%;height:100%;object-fit:cover; }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="screen active" id="screen-auth">
+  <div class="center-wrap">
+    <div class="logo">
+      <div class="logo-icon"><i class="ti ti-school"></i></div>
+      <h1>UniPlanner</h1>
+      <p>Your academic companion</p>
+    </div>
+
+    <div id="auth-login">
+      <div class="card">
+        <div class="err" id="login-err"></div>
+        <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"></div>
+        <button class="btn-full" id="btn-login">Sign in</button>
+      </div>
+      <div class="switch-link">Don't have an account? <span id="go-register">Create one</span></div>
+      <div class="switch-link" style="margin-top:8px"><span id="go-forgot">Forgot password?</span></div>
+    </div>
+
+    <div id="auth-register" style="display:none">
+      <div class="card">
+        <div class="err" id="reg-err"></div>
+        <div class="ok-msg" id="reg-ok"></div>
+        <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="field"><label>Password</label><input type="password" id="reg-pass" placeholder="min. 6 characters" autocomplete="new-password"></div>
+        <div class="field"><label>Confirm password</label><input type="password" id="reg-pass2" placeholder="••••••••" autocomplete="new-password"></div>
+        <button class="btn-full" id="btn-register">Create account</button>
+      </div>
+      <div class="switch-link">Already have an account? <span id="go-login">Sign in</span></div>
+    </div>
+
+    <div id="auth-forgot" style="display:none">
+      <div class="card">
+        <div class="err" id="forgot-err"></div>
+        <div class="ok-msg" id="forgot-ok"></div>
+        <div class="field"><label>Email</label><input type="email" id="forgot-email" placeholder="your@email.com"></div>
+        <button class="btn-full" id="btn-forgot">Send reset link</button>
+      </div>
+      <div class="back-link" id="go-login2"><span>Back to sign in</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="screen" id="screen-onboard">
+  <div class="center-wrap">
+    <div class="logo">
+      <div class="logo-icon"><i class="ti ti-school"></i></div>
+      <h1>Set up your profile</h1>
+      <p>Just once — synced everywhere</p>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot active" id="od0"></div>
+      <div class="step-dot" id="od1"></div>
+      <div class="step-dot" id="od2"></div>
+      <div class="step-dot" id="od3"></div>
+    </div>
+    <div class="card">
+      <div id="os0">
+        <div class="field"><label>City</label><select id="sel-city"><option value="">— Select city —</option></select></div>
+        <button class="btn-full" id="ob0">Continue</button>
+      </div>
+      <div id="os1" style="display:none">
+        <div class="field"><label>University</label><select id="sel-uni"><option value="">— Select university —</option></select></div>
+        <button class="btn-full" id="ob1">Continue</button>
+        <div class="back-link" id="obback0"><span>Back</span></div>
+      </div>
+      <div id="os2" style="display:none">
+        <div class="field"><label>Faculty</label><select id="sel-fac"><option value="">— Select faculty —</option></select></div>
+        <button class="btn-full" id="ob2">Continue</button>
+        <div class="back-link" id="obback1"><span>Back</span></div>
+      </div>
+      <div id="os3" style="display:none">
+        <div class="field"><label>Your name</label><input type="text" id="ob-name" placeholder="e.g. Alex" maxlength="30"></div>
+        <div class="field"><label>Year of study</label><select id="ob-year"><option value="1">Year 1</option><option value="2">Year 2</option><option value="3">Year 3</option><option value="4">Year 4</option><option value="5">Year 5</option><option value="6">Year 6</option></select></div>
+        <div class="err" id="ob-err"></div>
+        <button class="btn-full" id="ob3">Start using UniPlanner</button>
+        <div class="back-link" id="obback2"><span>Back</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="screen" id="screen-app">
+  <div class="nav-bar">
+    <div>
+      <div class="nav-title" id="app-title">UniPlanner</div>
+      <div class="nav-sub" id="app-sub"></div>
+    </div>
+    <div style="position:relative">
+      <div id="app-avatar" class="avatar" style="cursor:pointer" onclick="toggleProfileMenu()">?</div>
+      <div id="profile-menu" style="display:none;position:absolute;right:0;top:44px;background:var(--bg-primary);border:0.5px solid var(--border-md);border-radius:var(--radius-lg);min-width:180px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.15);overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:0.5px solid var(--border)">
+          <div id="menu-name" style="font-size:14px;font-weight:600;color:var(--text-primary)"></div>
+          <div id="menu-email" style="font-size:12px;color:var(--text-secondary);margin-top:2px"></div>
+        </div>
+        <button class="menu-item" onclick="openSettings()"><i class="ti ti-settings"></i> Settings</button>
+        <button class="menu-item" style="color:var(--danger-text)" onclick="doLogout()"><i class="ti ti-logout"></i> Sign out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div id="settings-page" style="display:none;position:fixed;inset:0;background:var(--bg-tertiary);z-index:200;overflow-y:auto">
+    <div style="max-width:480px;margin:0 auto;padding:0 0 40px">
+      <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-primary);border-bottom:0.5px solid var(--border);position:sticky;top:0;z-index:10">
+        <button class="icon-btn" onclick="closeSettings()"><i class="ti ti-arrow-left" style="font-size:20px"></i></button>
+        <span style="font-size:16px;font-weight:600">Settings</span>
+      </div>
+
+      <!-- PROFILE SECTION -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Profile</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <!-- Avatar -->
+          <div style="padding:20px 16px;display:flex;align-items:center;gap:16px;border-bottom:0.5px solid var(--border)">
+            <div style="position:relative">
+              <div id="settings-avatar" class="avatar" style="width:64px;height:64px;font-size:22px;font-weight:700;cursor:default"></div>
+              <label style="position:absolute;bottom:0;right:0;width:22px;height:22px;background:var(--text-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg-primary)">
+                <i class="ti ti-camera" style="font-size:11px;color:var(--bg-primary)"></i>
+                <input type="file" id="avatar-upload" accept="image/*" style="display:none">
+              </label>
+            </div>
+            <div>
+              <div id="settings-name" style="font-size:16px;font-weight:600;color:var(--text-primary)"></div>
+              <div id="settings-faculty" style="font-size:12px;color:var(--text-secondary);margin-top:2px;max-width:240px"></div>
+              <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px" id="settings-year"></div>
+            </div>
+          </div>
+          <!-- Name -->
+          <div style="padding:14px 16px;border-bottom:0.5px solid var(--border)">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Display name</div>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="settings-name-input" style="flex:1;padding:8px 10px;font-size:14px" placeholder="Your name">
+              <button class="btn-sm" id="btn-save-name" style="padding:8px 14px;font-size:13px">Save</button>
+            </div>
+          </div>
+          <!-- Email -->
+          <div style="padding:14px 16px">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Email</div>
+            <div id="settings-email-val" style="font-size:14px;color:var(--text-primary)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCOUNT SECTION -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Account</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <button class="menu-item" style="width:100%;border-radius:0" onclick="changePassword()"><i class="ti ti-lock"></i> Change password</button>
+          <button class="menu-item" style="width:100%;border-radius:0;color:var(--danger-text);border-top:0.5px solid var(--border)" onclick="doLogout()"><i class="ti ti-logout"></i> Sign out</button>
+        </div>
+      </div>
+
+      <!-- ACADEMIC SECTION -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Academic info</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text-secondary)">University</span>
+            <span id="settings-uni" style="font-size:13px;color:var(--text-primary);text-align:right;max-width:200px"></span>
+          </div>
+          <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text-secondary)">City</span>
+            <span id="settings-city" style="font-size:13px;color:var(--text-primary)"></span>
+          </div>
+          <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text-secondary)">Year of study</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <select id="settings-year-sel" style="font-size:13px;padding:4px 8px;width:auto">
+                <option value="1">Year 1</option><option value="2">Year 2</option><option value="3">Year 3</option><option value="4">Year 4</option><option value="5">Year 5</option><option value="6">Year 6</option>
+              </select>
+              <button class="btn-sm" id="btn-save-year" style="padding:6px 12px;font-size:12px">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APP INFO -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">App</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between">
+            <span style="font-size:13px;color:var(--text-secondary)">Version</span>
+            <span style="font-size:13px;color:var(--text-primary)">1.0.0</span>
+          </div>
+          <div style="padding:12px 16px;display:flex;justify-content:space-between">
+            <span style="font-size:13px;color:var(--text-secondary)">Built with</span>
+            <span style="font-size:13px;color:var(--text-primary)">Supabase + Claude AI</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="page-inner active" id="pi-dashboard">
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Weighted GPA</div><div class="metric-value" id="d-gpa">—</div></div>
+        <div class="metric"><div class="metric-label">Credits earned</div><div class="metric-value" id="d-credits">0/60</div></div>
+        <div class="metric"><div class="metric-label">Exams left</div><div class="metric-value" id="d-exams">0</div></div>
+        <div class="metric"><div class="metric-label">Study hrs/day</div><div class="metric-value" id="d-hrs">0h</div></div>
+      </div>
+      <div class="inner-card"><div class="card-title"><i class="ti ti-calendar"></i> Upcoming events</div><div id="dash-ev"></div></div>
+      <div class="inner-card"><div class="card-title"><i class="ti ti-chart-bar"></i> Credits progress</div><div id="dash-cr"></div></div>
+    </div>
+
+    <div class="page-inner" id="pi-credits">
+      <div class="section-lbl">Add course</div>
+      <div class="inner-card">
+        <div class="row-field"><label>Course name</label><input type="text" id="cr-name" placeholder="e.g. Signals & Systems"></div>
+        <div class="two-col">
+          <div class="row-field"><label>Credits</label><input type="number" id="cr-cred" min="1" max="12" value="5"></div>
+          <div class="row-field"><label>Grade (1–10)</label><input type="number" id="cr-grade" min="1" max="10" step="0.1" placeholder="—"></div>
+        </div>
+        <div class="row-field"><label>Semester</label><select id="cr-sem"><option value="1">Semester 1</option><option value="2">Semester 2</option></select></div>
+        <button class="btn-sm" id="cr-add"><i class="ti ti-plus"></i> Add course</button>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Weighted GPA</div><div class="metric-value" id="cr-gpa">—</div></div>
+        <div class="metric"><div class="metric-label">Total credits</div><div class="metric-value" id="cr-tot">0</div></div>
+      </div>
+      <div style="background:var(--bg-secondary);border-radius:var(--radius-md);padding:12px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:6px"><span>Progress toward 60 credits</span><span id="cr-prog-lbl">0 / 60</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="cr-prog-bar" style="width:0%"></div></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr><th style="width:38%">Course</th><th style="width:13%">Cr.</th><th style="width:14%">Grade</th><th style="width:23%">Status</th><th style="width:12%"></th></tr></thead><tbody id="cr-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <div class="page-inner" id="pi-calendar">
+      <div class="section-lbl">Add event</div>
+      <div class="inner-card">
+        <div class="row-field"><label>Title</label><input type="text" id="cal-title" placeholder="e.g. Exam: Electronics"></div>
+        <div class="row-field"><label>Date</label>
+          <div style="display:grid;grid-template-columns:2fr 2fr 3fr;gap:6px">
+            <select id="cal-day"><option value="">Day</option></select>
+            <select id="cal-month"><option value="">Month</option></select>
+            <select id="cal-year"><option value="">Year</option></select>
+          </div>
+        </div>
+        <div class="row-field"><label>Type</label><select id="cal-type"><option value="exam">Exam</option><option value="colloquium">Colloquium</option><option value="deadline">Deadline</option><option value="class">Class</option></select></div>
+        <button class="btn-sm" id="cal-add"><i class="ti ti-plus"></i> Add event</button>
+      </div>
+      <div class="section-lbl">Upcoming</div>
+      <div id="cal-list"></div>
+    </div>
+
+    <div class="page-inner" id="pi-study">
+      <div class="section-lbl">Plan a subject</div>
+      <div class="inner-card">
+        <div class="row-field"><label>Subject</label><input type="text" id="st-sub" placeholder="e.g. Digital Logic"></div>
+        <div class="row-field"><label>Exam date</label>
+          <div style="display:grid;grid-template-columns:2fr 2fr 3fr;gap:6px">
+            <select id="st-day"><option value="">Day</option></select>
+            <select id="st-month"><option value="">Month</option></select>
+            <select id="st-year"><option value="">Year</option></select>
+          </div>
+        </div>
+        <div class="row-field"><label>Difficulty</label><select id="st-diff"><option value="1">Easy</option><option value="2" selected>Medium</option><option value="3">Hard</option></select></div>
+        <button class="btn-sm" id="st-add"><i class="ti ti-calculator"></i> Generate plan</button>
+      </div>
+      <div class="section-lbl">Study plan</div>
+      <div id="st-list"></div>
+    </div>
+
+    <div class="page-inner" id="pi-ai">
+
+      <div class="section-lbl">PDF Library</div>
+      <div class="inner-card">
+        <div style="margin-bottom:10px;font-size:13px;color:var(--text-secondary)">Upload your course PDFs — saved in your account.</div>
+        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;padding:9px 14px;background:var(--bg-secondary);border-radius:var(--radius-md);border:0.5px solid var(--border-md);font-size:13px;font-weight:500;color:var(--text-primary)">
+          <i class="ti ti-upload"></i> Upload PDFs
+          <input type="file" id="pdf-upload" accept=".pdf" multiple style="display:none">
+        </label>
+        <div id="pdf-uploading" style="display:none;font-size:12px;color:var(--text-secondary);margin-top:8px">Uploading...</div>
+        <div id="pdf-list" style="margin-top:12px"></div>
+      </div>
+
+      <div class="section-lbl">Generate flashcard</div>
+      <div class="inner-card">
+        <div style="margin-bottom:10px;font-size:13px;color:var(--text-secondary)">Select which PDFs to include, then generate.</div>
+        <div id="pdf-select-list" style="margin-bottom:12px"></div>
+        <div class="row-field"><label>Extra notes (optional)</label>
+          <textarea id="ai-input" placeholder="Paste extra notes here..."></textarea>
+        </div>
+        <div class="row-field" style="margin-top:4px"><label>Card type</label>
+          <select id="ai-type">
+            <option value="summary">Concise summary</option>
+            <option value="defs">Key definitions &amp; formulas</option>
+            <option value="qa">10 Q&amp;A review questions</option>
+            <option value="mindmap">Mind-map structure (text)</option>
+          </select>
+        </div>
+        <button class="btn-sm" id="ai-gen" style="margin-top:8px"><i class="ti ti-sparkles"></i> Generate flashcard</button>
+      </div>
+
+      <div id="ai-result-wrap" style="display:none">
+        <div class="section-lbl">Generated card</div>
+        <div class="ai-box" id="ai-output"></div>
+        <button class="btn-sm" id="ai-copy" style="margin-top:12px;background:transparent;color:var(--text-primary);border:0.5px solid var(--border-md)"><i class="ti ti-copy"></i> Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="bnav-btn active" data-pi="dashboard"><i class="ti ti-home"></i>Home</button>
+    <button class="bnav-btn" data-pi="credits"><i class="ti ti-chart-bar"></i>Credits</button>
+    <button class="bnav-btn" data-pi="calendar"><i class="ti ti-calendar"></i>Calendar</button>
+    <button class="bnav-btn" data-pi="study"><i class="ti ti-clock"></i>Study</button>
+    <button class="bnav-btn" data-pi="ai"><i class="ti ti-file"></i>AI Cards</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SURL='https://mxgtloybwijpxavqgzdo.supabase.co';
+const SKEY='sb_publishable_yvJN7OKRI_PZd93zNOFMnQ_jOvXx85y';
+const sb=supabase.createClient(SURL,SKEY);
+
+const DB={"Alba Iulia":{"Universitatea '1 Decembrie 1918' din Alba Iulia":["Facultatea de Drept și Științe Sociale","Facultatea de Istorie și Filologie","Facultatea de Teologie Ortodoxă","Facultatea de Științe Exacte și Inginerești"]},"Arad":{"Universitatea 'Aurel Vlaicu' din Arad":["Facultatea de Inginerie","Facultatea de Științe Exacte și Naturale","Facultatea de Științe Umaniste și Sociale","Facultatea de Teologie Ortodoxă","Facultatea de Design"]},"Bacău":{"Universitatea 'Vasile Alecsandri' din Bacău":["Facultatea de Inginerie","Facultatea de Litere","Facultatea de Mișcare, Sport și Sănătate","Facultatea de Științe Economice"]},"Baia Mare":{"Universitatea Tehnică din Cluj-Napoca — Centrul Baia Mare":["Facultatea de Inginerie"]},"Brașov":{"Universitatea Transilvania din Brașov":["Facultatea de Inginerie Electrică și Știința Calculatoarelor","Facultatea de Inginerie Mecanică","Facultatea de Silvicultură și Exploatări Forestiere","Facultatea de Matematică și Informatică","Facultatea de Drept","Facultatea de Muzică","Facultatea de Psihologie și Științele Educației","Facultatea de Educație Fizică și Sporturi de Munte","Facultatea de Alimentație și Turism","Facultatea de Design de Produs și Mediu","Facultatea de Medicină","Facultatea de Sociologie și Comunicare"]},"București":{"Universitatea Politehnica din București":["Facultatea de Electronică, Telecomunicații și Tehnologia Informației (ETTI)","Facultatea de Automatică și Calculatoare (ACS)","Facultatea de Inginerie Electrică","Facultatea de Inginerie Mecanică și Mecatronică","Facultatea de Inginerie în Limbi Străine (FILS)","Facultatea de Inginerie Chimică și Biotehnologii","Facultatea de Inginerie Aerospațială","Facultatea de Știința și Ingineria Materialelor","Facultatea de Energetică","Facultatea de Transporturi","Facultatea de Antreprenoriat, Ingineria și Managementul Afacerilor"],"Universitatea din București":["Facultatea de Matematică și Informatică","Facultatea de Fizică","Facultatea de Chimie","Facultatea de Biologie","Facultatea de Geografie","Facultatea de Geologie și Geofizică","Facultatea de Drept","Facultatea de Filosofie","Facultatea de Psihologie și Științele Educației","Facultatea de Sociologie și Asistență Socială","Facultatea de Jurnalism și Științele Comunicării","Facultatea de Litere","Facultatea de Limbi și Literaturi Străine","Facultatea de Istorie","Facultatea de Teologie Ortodoxă"],"Universitatea de Medicină și Farmacie 'Carol Davila'":["Facultatea de Medicină","Facultatea de Medicină Dentară","Facultatea de Farmacie","Facultatea de Moașe și Asistență Medicală"],"Academia de Studii Economice din București":["Facultatea de Economie Teoretică și Aplicată","Facultatea de Relații Economice Internaționale","Facultatea de Finanțe, Asigurări, Bănci și Burse de Valori","Facultatea de Contabilitate și Informatică de Gestiune","Facultatea de Management","Facultatea de Marketing","Facultatea de Economie Agroalimentară și a Mediului","Facultatea de Administrație și Management Public","Facultatea de Cibernetică, Statistică și Informatică Economică"],"Universitatea Națională de Arte din București":["Facultatea de Arte Plastice","Facultatea de Arte Decorative și Design","Facultatea de Istoria și Teoria Artei"],"Universitatea de Arhitectură și Urbanism 'Ion Mincu'":["Facultatea de Arhitectură","Facultatea de Urbanism","Facultatea de Design de Interior"],"Universitatea Națională de Educație Fizică și Sport":["Facultatea de Educație Fizică și Sport","Facultatea de Kinetoterapie"],"Universitatea de Agronomie și Medicină Veterinară din București":["Facultatea de Agricultură","Facultatea de Horticultură","Facultatea de Zootehnie","Facultatea de Biotehnologii","Facultatea de Medicină Veterinară","Facultatea de Îmbunătățiri Funciare și Ingineria Mediului","Facultatea de Management"]},"Cluj-Napoca":{"Universitatea Babeș-Bolyai din Cluj-Napoca":["Facultatea de Matematică și Informatică","Facultatea de Fizică","Facultatea de Chimie și Inginerie Chimică","Facultatea de Biologie și Geologie","Facultatea de Drept","Facultatea de Economie și Administrarea Afacerilor","Facultatea de Psihologie și Științele Educației","Facultatea de Sociologie și Asistență Socială","Facultatea de Istoria și Filosofia","Facultatea de Litere","Facultatea de Studii Europene","Facultatea de Teologie Ortodoxă","Facultatea de Educație Fizică și Sport","Facultatea de Geografie"],"Universitatea Tehnică din Cluj-Napoca":["Facultatea de Automatică și Calculatoare","Facultatea de Construcții","Facultatea de Electronică, Telecomunicații și Tehnologia Informației","Facultatea de Inginerie Electrică","Facultatea de Inginerie Mecanică","Facultatea de Instalații","Facultatea de Arhitectură și Urbanism"],"Universitatea de Medicină și Farmacie 'Iuliu Hațieganu'":["Facultatea de Medicină","Facultatea de Medicină Dentară","Facultatea de Farmacie"]},"Constanța":{"Universitatea 'Ovidius' din Constanța":["Facultatea de Drept și Științe Administrative","Facultatea de Educație Fizică și Sport","Facultatea de Inginerie Mecanică, Industrială și Maritimă","Facultatea de Litere","Facultatea de Matematică și Informatică","Facultatea de Medicină","Facultatea de Medicină Dentară","Facultatea de Farmacie","Facultatea de Psihologie și Științele Educației","Facultatea de Științe Economice","Facultatea de Arte"],"Universitatea Maritimă din Constanța":["Facultatea de Navigație și Transport Naval","Facultatea de Electromecanică Navală","Facultatea de Inginerie Navală și Management Portuar"]},"Craiova":{"Universitatea din Craiova":["Facultatea de Automatică, Calculatoare și Electronică","Facultatea de Drept","Facultatea de Economie și Administrarea Afacerilor","Facultatea de Educație Fizică și Sport","Facultatea de Electrotehnică","Facultatea de Horticultură","Facultatea de Inginerie Electrică","Facultatea de Litere","Facultatea de Matematică și Informatică","Facultatea de Mecanică","Facultatea de Teologie Ortodoxă","Facultatea de Agronomie"]},"Galați":{"Universitatea 'Dunărea de Jos' din Galați":["Facultatea de Automatică, Calculatoare, Inginerie Electrică și Electronică","Facultatea de Drept și Administrație Publică","Facultatea de Economie și Administrarea Afacerilor","Facultatea de Educație Fizică și Sport","Facultatea de Inginerie Mecanică și Navală","Facultatea de Litere și Teologie","Facultatea de Medicină și Farmacie","Facultatea de Științe și Mediu","Facultatea de Ingineria și Știința Alimentelor","Facultatea de Arte"]},"Iași":{"Universitatea 'Alexandru Ioan Cuza' din Iași":["Facultatea de Biologie","Facultatea de Chimie","Facultatea de Drept","Facultatea de Economie și Administrarea Afacerilor","Facultatea de Educație Fizică și Sport","Facultatea de Filosofie și Științe Social-Politice","Facultatea de Fizică","Facultatea de Geografie-Geologie","Facultatea de Informatică","Facultatea de Istorie","Facultatea de Litere","Facultatea de Matematică","Facultatea de Psihologie și Științele Educației","Facultatea de Teologie Ortodoxă"],"Universitatea Tehnică 'Gheorghe Asachi' din Iași":["Facultatea de Automatică și Calculatoare","Facultatea de Construcții și Instalații","Facultatea de Electronică, Telecomunicații și Tehnologia Informației","Facultatea de Hidrotehnică, Geodezie și Ingineria Mediului","Facultatea de Inginerie Chimică și Protecția Mediului","Facultatea de Inginerie Electrică, Energetică și Informatică Aplicată","Facultatea de Mecanică","Facultatea de Știința și Ingineria Materialelor","Facultatea de Textile, Pielărie și Management Industrial","Facultatea de Arhitectură"],"Universitatea de Medicină și Farmacie 'Grigore T. Popa'":["Facultatea de Medicină","Facultatea de Medicină Dentară","Facultatea de Farmacie","Facultatea de Bioinginerie Medicală"]},"Oradea":{"Universitatea din Oradea":["Facultatea de Arhitectură și Construcții","Facultatea de Arte","Facultatea de Drept","Facultatea de Economie","Facultatea de Electrică și Informatică Energetică","Facultatea de Geografie, Turism și Sport","Facultatea de Inginerie Managerială și Tehnologică","Facultatea de Litere","Facultatea de Medicină și Farmacie","Facultatea de Protecția Mediului","Facultatea de Științe","Facultatea de Științe Socio-Umane","Facultatea de Teologie Ortodoxă"]},"Petroșani":{"Universitatea din Petroșani":["Facultatea de Mine","Facultatea de Mecanică și Electrică","Facultatea de Științe"]},"Pitești":{"Universitatea din Pitești":["Facultatea de Mecanică și Tehnologie","Facultatea de Electronică, Comunicații și Calculatoare","Facultatea de Drept și Științe Administrative","Facultatea de Economie","Facultatea de Teologie Ortodoxă","Facultatea de Educație Fizică și Sport","Facultatea de Științe ale Educației, Științe Sociale și Psihologie"]},"Ploiești":{"Universitatea Petrol-Gaze din Ploiești":["Facultatea de Inginerie Mecanică și Electrică","Facultatea de Inginerie Petrolieră și Gazeifică","Facultatea de Litere și Științe","Facultatea de Științe Economice","Facultatea de Tehnologia Petrolului și Petrochimie"]},"Reșița":{"Universitatea 'Eftimie Murgu' din Reșița":["Facultatea de Inginerie","Facultatea de Științe Sociale"]},"Sibiu":{"Universitatea 'Lucian Blaga' din Sibiu":["Facultatea de Drept","Facultatea de Inginerie","Facultatea de Litere și Arte","Facultatea de Medicină","Facultatea de Științe","Facultatea de Științe Economice","Facultatea de Științe Sociale și Umaniste","Facultatea de Teologie Ortodoxă"]},"Suceava":{"Universitatea 'Ștefan cel Mare' din Suceava":["Facultatea de Drept și Științe Administrative","Facultatea de Educație Fizică și Sport","Facultatea de Inginerie Electrică și Știința Calculatoarelor","Facultatea de Inginerie Mecanică, Mecatronică și Management","Facultatea de Litere și Științe ale Comunicării","Facultatea de Silvicultură","Facultatea de Economie, Administrație și Afaceri","Facultatea de Istorie și Geografie","Facultatea de Alimentație și Turism"]},"Târgoviște":{"Universitatea Valahia din Târgoviște":["Facultatea de Drept și Administrație Publică","Facultatea de Economie","Facultatea de Inginerie Electrică, Electronică și Tehnologia Informației","Facultatea de Inginerie Mecanică","Facultatea de Litere","Facultatea de Materiale și Ingineria Mediului","Facultatea de Teologie Ortodoxă","Facultatea de Știința și Ingineria Alimentelor"]},"Târgu Jiu":{"Universitatea Constantin Brâncuși din Târgu Jiu":["Facultatea de Inginerie","Facultatea de Litere și Științe Sociale","Facultatea de Economie și Administrarea Afacerilor","Facultatea de Medicină"]},"Târgu Mureș":{"Universitatea de Medicină, Farmacie, Știință și Tehnologie 'George Emil Palade'":["Facultatea de Medicină","Facultatea de Medicină Dentară","Facultatea de Farmacie","Facultatea de Inginerie și Tehnologia Informației","Facultatea de Economie și Drept"]},"Timișoara":{"Universitatea de Vest din Timișoara":["Facultatea de Arte și Design","Facultatea de Chimie, Biologie, Geografie","Facultatea de Drept","Facultatea de Economie și de Administrare a Afacerilor","Facultatea de Educație Fizică și Sport","Facultatea de Fizică","Facultatea de Litere, Istorie și Teologie","Facultatea de Matematică și Informatică","Facultatea de Muzică și Teatru","Facultatea de Psihologie și Științele Educației","Facultatea de Sociologie și Psihologie"],"Universitatea Politehnica Timișoara":["Facultatea de Automatică și Calculatoare","Facultatea de Chimie Industrială și Ingineria Mediului","Facultatea de Construcții","Facultatea de Electronică și Telecomunicații","Facultatea de Inginerie Electrică","Facultatea de Inginerie Mecanică","Facultatea de Management în Producție și Transporturi","Facultatea de Arhitectură și Urbanism"],"Universitatea de Medicină și Farmacie 'Victor Babeș'":["Facultatea de Medicină","Facultatea de Medicină Dentară","Facultatea de Farmacie"]}};
+
+let currentUser=null,profile=null;
+const S={courses:[],events:[],study:[]};
+
+function show(id){['screen-auth','screen-onboard','screen-app'].forEach(s=>document.getElementById(s).classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
+function hideErr(id){document.getElementById(id).style.display='none';}
+function showOk(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
+
+document.getElementById('go-register').onclick=()=>{document.getElementById('auth-login').style.display='none';document.getElementById('auth-register').style.display='';document.getElementById('auth-forgot').style.display='none';};
+document.getElementById('go-login').onclick=()=>{document.getElementById('auth-login').style.display='';document.getElementById('auth-register').style.display='none';document.getElementById('auth-forgot').style.display='none';};
+document.getElementById('go-forgot').onclick=()=>{document.getElementById('auth-login').style.display='none';document.getElementById('auth-register').style.display='none';document.getElementById('auth-forgot').style.display='';};
+document.getElementById('go-login2').onclick=()=>{document.getElementById('auth-login').style.display='';document.getElementById('auth-register').style.display='none';document.getElementById('auth-forgot').style.display='none';};
+
+document.getElementById('btn-login').onclick=async()=>{
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  hideErr('login-err');
+  if(!email||!pass){showErr('login-err','Please fill in all fields.');return;}
+  const btn=document.getElementById('btn-login');btn.disabled=true;btn.textContent='Signing in...';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error){showErr('login-err',error.message);return;}
+  currentUser=data.user;await loadProfileAndGo();
+};
+
+document.getElementById('btn-register').onclick=async()=>{
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const pass2=document.getElementById('reg-pass2').value;
+  hideErr('reg-err');
+  if(!email||!pass||!pass2){showErr('reg-err','Please fill in all fields.');return;}
+  if(pass!==pass2){showErr('reg-err','Passwords do not match.');return;}
+  if(pass.length<6){showErr('reg-err','Password must be at least 6 characters.');return;}
+  const btn=document.getElementById('btn-register');btn.disabled=true;btn.textContent='Creating account...';
+  const {data,error}=await sb.auth.signUp({email,password:pass});
+  btn.disabled=false;btn.textContent='Create account';
+  if(error){showErr('reg-err',error.message);return;}
+  currentUser=data.user;show('screen-onboard');initOnboard();
+};
+
+document.getElementById('btn-forgot').onclick=async()=>{
+  const email=document.getElementById('forgot-email').value.trim();
+  hideErr('forgot-err');
+  if(!email){showErr('forgot-err','Please enter your email.');return;}
+  const btn=document.getElementById('btn-forgot');btn.disabled=true;btn.textContent='Sending...';
+  const {error}=await sb.auth.resetPasswordForEmail(email);
+  btn.disabled=false;btn.textContent='Send reset link';
+  if(error){showErr('forgot-err',error.message);return;}
+  showOk('forgot-ok','Reset link sent! Check your email.');
+};
+
+let obStep=0,obCity='',obUni='';
+function setObStep(n){for(let i=0;i<4;i++){document.getElementById('os'+i).style.display=i===n?'':'none';document.getElementById('od'+i).classList.toggle('active',i===n);}obStep=n;}
+function initOnboard(){const sc=document.getElementById('sel-city');sc.innerHTML='<option value="">— Select city —</option>';Object.keys(DB).sort().forEach(c=>sc.add(new Option(c,c)));setObStep(0);}
+document.getElementById('ob0').onclick=()=>{const c=document.getElementById('sel-city').value;if(!c)return;obCity=c;const su=document.getElementById('sel-uni');su.innerHTML='<option value="">— Select university —</option>';Object.keys(DB[c]).forEach(u=>su.add(new Option(u,u)));setObStep(1);};
+document.getElementById('ob1').onclick=()=>{const u=document.getElementById('sel-uni').value;if(!u)return;obUni=u;const sf=document.getElementById('sel-fac');sf.innerHTML='<option value="">— Select faculty —</option>';DB[obCity][u].forEach(f=>sf.add(new Option(f,f)));setObStep(2);};
+document.getElementById('ob2').onclick=()=>{const f=document.getElementById('sel-fac').value;if(!f)return;setObStep(3);};
+document.getElementById('ob3').onclick=async()=>{
+  const name=document.getElementById('ob-name').value.trim();
+  const year=parseInt(document.getElementById('ob-year').value);
+  const city=obCity,university=obUni,faculty=document.getElementById('sel-fac').value;
+  hideErr('ob-err');
+  if(!name){showErr('ob-err','Please enter your name.');return;}
+  const btn=document.getElementById('ob3');btn.disabled=true;btn.textContent='Saving...';
+  const {error}=await sb.from('profiles').upsert({id:currentUser.id,name,year,city,university,faculty});
+  btn.disabled=false;btn.textContent='Start using UniPlanner';
+  if(error){showErr('ob-err',error.message);return;}
+  profile={name,year,city,university,faculty};
+  await loadData();initAppUI();show('screen-app');
+};
+document.getElementById('obback0').onclick=()=>setObStep(0);
+document.getElementById('obback1').onclick=()=>setObStep(1);
+document.getElementById('obback2').onclick=()=>setObStep(2);
+
+async function loadProfileAndGo(){
+  const {data,error}=await sb.from('profiles').select('*').eq('id',currentUser.id).single();
+  if(error||!data){show('screen-onboard');initOnboard();return;}
+  profile=data;await loadData();initAppUI();show('screen-app');
+}
+async function loadData(){
+  const uid=currentUser.id;
+  const [c,e,s]=await Promise.all([sb.from('courses').select('*').eq('user_id',uid).order('created_at'),sb.from('events').select('*').eq('user_id',uid).order('date'),sb.from('study_plans').select('*').eq('user_id',uid).order('exam_date')]);
+  S.courses=c.data||[];S.events=e.data||[];S.study=s.data||[];
+}
+function initAppUI(){
+  document.getElementById('app-title').textContent=profile.name+"'s planner";
+  const sf=profile.faculty.replace('Facultatea de ','').replace('Facultatea ','');
+  document.getElementById('app-sub').textContent=sf.length>42?sf.slice(0,40)+'…':sf;
+  document.getElementById('menu-name').textContent=profile.name;
+  document.getElementById('menu-email').textContent=currentUser.email||'';
+  updateAvatarDisplay('app-avatar', profile.name, profile.avatar_url);
+  loadPdfs();
+  renderAll();
+}
+// PROFILE MENU
+function toggleProfileMenu() {
+  const menu = document.getElementById('profile-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', (e) => {
+  const av = document.getElementById('app-avatar');
+  const menu = document.getElementById('profile-menu');
+  if (av && menu && !av.contains(e.target) && !menu.contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser=null;profile=null;S.courses=[];S.events=[];S.study=[];
+  show('screen-auth');
+}
+
+// SETTINGS
+function openSettings() {
+  document.getElementById('profile-menu').style.display = 'none';
+  const p = profile;
+  document.getElementById('settings-name').textContent = p.name;
+  document.getElementById('settings-faculty').textContent = p.faculty;
+  document.getElementById('settings-year').textContent = 'Year ' + p.year;
+  document.getElementById('settings-uni').textContent = p.university;
+  document.getElementById('settings-city').textContent = p.city;
+  document.getElementById('settings-email-val').textContent = currentUser.email;
+  document.getElementById('menu-name').textContent = p.name;
+  document.getElementById('menu-email').textContent = currentUser.email;
+  document.getElementById('settings-name-input').value = p.name;
+  document.getElementById('settings-year-sel').value = p.year;
+  // Avatar
+  updateAvatarDisplay('settings-avatar', p.name, p.avatar_url);
+  document.getElementById('settings-page').style.display = 'block';
+}
+function closeSettings() {
+  document.getElementById('settings-page').style.display = 'none';
+}
+
+function updateAvatarDisplay(elId, name, avatarUrl) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (avatarUrl) {
+    el.innerHTML = `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  } else {
+    el.textContent = (name||'?').slice(0,2).toUpperCase();
+    el.style.background = '';
+  }
+}
+
+function refreshAllAvatars() {
+  updateAvatarDisplay('app-avatar', profile.name, profile.avatar_url);
+  updateAvatarDisplay('settings-avatar', profile.name, profile.avatar_url);
+  document.getElementById('menu-name').textContent = profile.name;
+}
+
+// AVATAR UPLOAD
+document.getElementById('avatar-upload').onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !currentUser) return;
+  const ext = file.name.split('.').pop();
+  const path = currentUser.id + '/avatars/avatar.' + ext;
+  const btn = document.querySelector('label[for="avatar-upload"]');
+
+  const { error: upErr } = await sb.storage.from('pdfs').upload(path, file, { upsert: true, contentType: file.type });
+  if (upErr) { alert('Upload failed: ' + upErr.message); return; }
+
+  // Use signed URL (1 year) since bucket is private
+  const { data: signedData, error: signErr } = await sb.storage.from('pdfs').createSignedUrl(path, 60*60*24*365);
+  if (signErr || !signedData) { alert('Could not get image URL.'); return; }
+  const avatarUrl = signedData.signedUrl;
+
+  const { error: dbErr } = await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', currentUser.id);
+  if (!dbErr) {
+    profile.avatar_url = avatarUrl;
+    refreshAllAvatars();
+  } else {
+    alert('Could not save avatar: ' + dbErr.message);
+  }
+  e.target.value = '';
+};
+
+// SAVE NAME
+document.getElementById('btn-save-name').onclick = async () => {
+  const name = document.getElementById('settings-name-input').value.trim();
+  if (!name) return;
+  const btn = document.getElementById('btn-save-name');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  const { error } = await sb.from('profiles').update({ name }).eq('id', currentUser.id);
+  btn.textContent = 'Save'; btn.disabled = false;
+  if (!error) {
+    profile.name = name;
+    document.getElementById('app-title').textContent = name + "'s planner";
+    document.getElementById('settings-name').textContent = name;
+    document.getElementById('menu-name').textContent = name;
+    refreshAllAvatars();
+    btn.textContent = 'Saved ✓';
+    setTimeout(() => btn.textContent = 'Save', 2000);
+  }
+};
+
+// SAVE YEAR
+document.getElementById('btn-save-year').onclick = async () => {
+  const year = parseInt(document.getElementById('settings-year-sel').value);
+  const btn = document.getElementById('btn-save-year');
+  btn.textContent = '...'; btn.disabled = true;
+  const { error } = await sb.from('profiles').update({ year }).eq('id', currentUser.id);
+  btn.textContent = 'Save'; btn.disabled = false;
+  if (!error) {
+    profile.year = year;
+    document.getElementById('settings-year').textContent = 'Year ' + year;
+    btn.textContent = '✓';
+    setTimeout(() => btn.textContent = 'Save', 2000);
+  }
+};
+
+// CHANGE PASSWORD
+function changePassword() {
+  const email = currentUser.email;
+  sb.auth.resetPasswordForEmail(email).then(() => alert('Password reset email sent to ' + email));
+  closeSettings();
+}
+
+document.querySelectorAll('.bnav-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.page-inner').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    const pi = btn.dataset.pi;
+    document.getElementById('pi-'+pi).classList.add('active');
+    renderAll();
+    if (pi === 'ai') loadPdfs();
+  };
+});
+
+function gpa(courses){const all=courses.filter(c=>c.grade);if(!all.length)return null;const sp=all.reduce((a,c)=>a+parseFloat(c.grade)*parseInt(c.credits),0);const sc=all.reduce((a,c)=>a+parseInt(c.credits),0);return sc?(sp/sc).toFixed(2):null;}
+function earned(courses){return courses.filter(c=>c.grade&&parseFloat(c.grade)>=5).reduce((a,c)=>a+parseInt(c.credits),0);}
+
+function renderCredits(){
+  const tb=document.getElementById('cr-tbody');
+  tb.innerHTML=S.courses.length?S.courses.map(c=>{const g=c.grade?parseFloat(c.grade):null;const badge=g===null?'<span class="badge b-pend">Pending</span>':g>=5?'<span class="badge b-ok">Passed</span>':'<span class="badge b-no">Failed</span>';return `<tr><td>${c.name}</td><td>${c.credits}</td><td>${g!==null?g.toFixed(1):'—'}</td><td>${badge}</td><td><button class="icon-btn" onclick="delC('${c.id}')"><i class="ti ti-trash"></i></button></td></tr>`;}).join(''):'<tr><td colspan="5" class="empty-state">No courses yet</td></tr>';
+  const g=gpa(S.courses),cr=earned(S.courses);
+  document.getElementById('cr-gpa').textContent=g||'—';
+  document.getElementById('cr-tot').textContent=cr;
+  const pct=Math.min(100,Math.round(cr/60*100));
+  document.getElementById('cr-prog-bar').style.width=pct+'%';
+  document.getElementById('cr-prog-lbl').textContent=cr+' / 60';
+}
+function renderCalendar(){
+  const list=document.getElementById('cal-list');
+  const today=new Date().toISOString().split('T')[0];
+  const future=[...S.events].filter(e=>e.date>=today).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!future.length){list.innerHTML='<div class="empty-state">No upcoming events</div>';return;}
+  const tb={exam:'b-no',colloquium:'b-pend',deadline:'b-info',class:'b-ok'};
+  const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  list.innerHTML=future.map(e=>{const d=new Date(e.date+'T00:00:00');return `<div class="event-row"><div class="event-date-box"><div class="ev-day">${d.getDate()}</div><div class="ev-mon">${mn[d.getMonth()]}</div></div><div style="flex:1"><div style="font-size:14px;font-weight:500">${e.title}</div><span class="badge ${tb[e.type]||'b-info'}" style="margin-top:3px">${e.type}</span></div><button class="icon-btn" onclick="delE('${e.id}')"><i class="ti ti-trash"></i></button></div>`;}).join('');
+}
+function renderStudy(){
+  const list=document.getElementById('st-list');
+  if(!S.study.length){list.innerHTML='<div class="empty-state">No subjects planned yet</div>';return;}
+  const today=new Date();
+  list.innerHTML=S.study.map(s=>{const days=Math.max(1,Math.ceil((new Date(s.exam_date+'T00:00:00')-today)/86400000));const total=s.difficulty===3?30:s.difficulty===2?20:12;const pd=Math.ceil(total/days);return `<div class="study-row"><div><div style="font-size:14px;font-weight:500">${s.subject}</div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${days}d left · ${total}h total</div></div><div style="display:flex;align-items:center;gap:10px"><div style="font-size:20px;font-weight:600">${pd}h/day</div><button class="icon-btn" onclick="delSt('${s.id}')"><i class="ti ti-trash"></i></button></div></div>`;}).join('');
+}
+function renderDashboard(){
+  const g=gpa(S.courses),cr=earned(S.courses);
+  document.getElementById('d-gpa').textContent=g||'—';
+  document.getElementById('d-credits').textContent=cr+'/60';
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('d-exams').textContent=S.events.filter(e=>e.type==='exam'&&e.date>=today).length;
+  const now=new Date();
+  const th=S.study.reduce((a,s)=>{const d=Math.max(1,Math.ceil((new Date(s.exam_date+'T00:00:00')-now)/86400000));const t=s.difficulty===3?30:s.difficulty===2?20:12;return a+Math.ceil(t/d);},0);
+  document.getElementById('d-hrs').textContent=th+'h';
+  const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const up=[...S.events].filter(e=>e.date>=today).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  document.getElementById('dash-ev').innerHTML=up.length?up.map(e=>{const d=new Date(e.date+'T00:00:00');return `<div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border)"><span style="font-size:12px;color:var(--text-secondary);min-width:46px">${d.getDate()} ${mn[d.getMonth()]}</span><span style="font-size:13px">${e.title}</span></div>`;}).join(''):'<div class="empty-state">No events yet</div>';
+  document.getElementById('dash-cr').innerHTML=S.courses.length?S.courses.slice(0,5).map(c=>{const gg=c.grade?parseFloat(c.grade):null;const pct=gg?Math.min(100,gg*10):0;return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${c.name}</span><span style="color:var(--text-secondary)">${gg?gg.toFixed(1):'—'} · ${c.credits}cr</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>`;}).join(''):'<div class="empty-state">Add courses in Credits tab</div>';
+}
+function renderAll(){renderCredits();renderCalendar();renderStudy();renderDashboard();}
+
+window.delC=async(id)=>{await sb.from('courses').delete().eq('id',id);S.courses=S.courses.filter(c=>c.id!==id);renderAll();};
+window.delE=async(id)=>{await sb.from('events').delete().eq('id',id);S.events=S.events.filter(e=>e.id!==id);renderAll();};
+window.delSt=async(id)=>{await sb.from('study_plans').delete().eq('id',id);S.study=S.study.filter(s=>s.id!==id);renderAll();};
+
+document.getElementById('cr-add').onclick=async()=>{
+  const name=document.getElementById('cr-name').value.trim();const credits=parseInt(document.getElementById('cr-cred').value);const gradeVal=document.getElementById('cr-grade').value;const grade=gradeVal?parseFloat(gradeVal):null;const semester=parseInt(document.getElementById('cr-sem').value);
+  if(!name)return;const btn=document.getElementById('cr-add');btn.disabled=true;
+  const {data,error}=await sb.from('courses').insert({user_id:currentUser.id,name,credits,grade,semester}).select().single();
+  btn.disabled=false;if(!error){S.courses.push(data);document.getElementById('cr-name').value='';document.getElementById('cr-grade').value='';renderAll();}
+};
+document.getElementById('cal-add').onclick=async()=>{
+  const title=document.getElementById('cal-title').value.trim();const date=getDateValue('cal');const type=document.getElementById('cal-type').value;
+  if(!title||!date)return;const btn=document.getElementById('cal-add');btn.disabled=true;
+  const {data,error}=await sb.from('events').insert({user_id:currentUser.id,title,date,type}).select().single();
+  btn.disabled=false;if(!error){S.events.push(data);document.getElementById('cal-title').value='';resetDate('cal');renderAll();}
+};
+document.getElementById('st-add').onclick=async()=>{
+  const subject=document.getElementById('st-sub').value.trim();const exam_date=getDateValue('st');const difficulty=parseInt(document.getElementById('st-diff').value);
+  if(!subject||!exam_date)return;const btn=document.getElementById('st-add');btn.disabled=true;
+  const {data,error}=await sb.from('study_plans').insert({user_id:currentUser.id,subject,exam_date,difficulty}).select().single();
+  btn.disabled=false;if(!error){S.study.push(data);document.getElementById('st-sub').value='';resetDate('st');renderAll();}
+};
+// PDF LIBRARY
+let userPdfs = [];
+
+async function loadPdfs() {
+  if (!currentUser) return;
+  const { data, error } = await sb.storage.from('pdfs').list(currentUser.id + '/');
+  if (error) { console.error(error); return; }
+  userPdfs = (data || []).filter(f => f.name.toLowerCase().endsWith('.pdf'));
+  renderPdfList();
+}
+
+function renderPdfList() {
+  const list = document.getElementById('pdf-list');
+  const selectList = document.getElementById('pdf-select-list');
+  if (!userPdfs.length) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--text-tertiary)">No PDFs uploaded yet.</div>';
+    selectList.innerHTML = '<div style="font-size:13px;color:var(--text-tertiary)">Upload PDFs above to include them.</div>';
+    return;
+  }
+  list.innerHTML = userPdfs.map(f => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-file-type-pdf" style="color:#e74c3c"></i>${f.name.replace(/^[^/]+\//, '')}</div>
+      <button class="icon-btn" onclick="deletePdf('${f.name}')"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
+  selectList.innerHTML = '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Select PDFs to include:</div>' +
+    userPdfs.map(f => {
+      const name = f.name.replace(/^[^/]+\//, '');
+      return `<label style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px;cursor:pointer">
+        <input type="checkbox" class="pdf-checkbox" data-name="${f.name}" checked style="width:16px;height:16px"> ${name}
+      </label>`;
+    }).join('');
+}
+
+window.deletePdf = async (name) => {
+  await sb.storage.from('pdfs').remove([name]);
+  await loadPdfs();
+};
+
+document.getElementById('pdf-upload').onchange = async (e) => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  const uploading = document.getElementById('pdf-uploading');
+  uploading.style.display = 'block';
+  for (const file of files) {
+    const path = currentUser.id + '/' + file.name;
+    await sb.storage.from('pdfs').upload(path, file, { upsert: true });
+  }
+  uploading.style.display = 'none';
+  e.target.value = '';
+  await loadPdfs();
+};
+
+async function downloadPdfAsBase64(fileName) {
+  const { data, error } = await sb.storage.from('pdfs').download(fileName);
+  if (error) return null;
+  const arrayBuffer = await data.arrayBuffer();
+  const uint8 = new Uint8Array(arrayBuffer);
+  let binary = '';
+  for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+  return btoa(binary);
+}
+
+document.getElementById('ai-gen').onclick = async () => {
+  const extraNotes = document.getElementById('ai-input').value.trim();
+  const type = document.getElementById('ai-type').value;
+  const wrap = document.getElementById('ai-result-wrap');
+  const out = document.getElementById('ai-output');
+
+  const selected = Array.from(document.querySelectorAll('.pdf-checkbox:checked')).map(cb => cb.dataset.name);
+  if (!selected.length && !extraNotes) {
+    out.textContent = 'Please select at least one PDF or add some notes.';
+    wrap.style.display = '';
+    return;
+  }
+
+  wrap.style.display = '';
+
+  // Build content array with PDFs as base64 documents
+  const contentParts = [];
+
+  for (const name of selected) {
+    const shortName = name.replace(/^[^/]+\//, '');
+    out.textContent = `Downloading: ${shortName}...`;
+    const b64 = await downloadPdfAsBase64(name);
+    if (b64) {
+      contentParts.push({
+        type: 'document',
+        source: { type: 'base64', media_type: 'application/pdf', data: b64 },
+        title: shortName
+      });
+    }
+  }
+
+  const tl = {summary:'a concise structured summary with bullet points',defs:'a list of key definitions and formulas, one per line',qa:'10 review questions with short answers',mindmap:'a mind-map structure in text format with main topic and subtopics'}[type];
+
+  let prompt = `Based on the provided course material(s), generate ${tl}.`;
+  if (extraNotes) prompt += `\n\nAdditional notes:\n${extraNotes}`;
+  prompt += '\n\nReply with only the flashcard content, no preamble.';
+  contentParts.push({ type: 'text', text: prompt });
+
+  out.textContent = 'Generating flashcard...';
+  try {
+    const resp = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: 'You are an academic assistant for university students. Generate clear, concise study flashcards in English based on the provided course materials.',
+        messages: [{ role: 'user', content: contentParts }]
+      })
+    });
+    const data = await resp.json();
+    if (data.error) { out.textContent = 'API error: ' + data.error.message; return; }
+    out.textContent = data.content?.[0]?.text || 'Error generating.';
+  } catch(e) { out.textContent = 'Connection error: ' + e.message; }
+};
+
+document.getElementById('ai-copy').onclick = () => {
+  navigator.clipboard.writeText(document.getElementById('ai-output').textContent).then(() => {
+    const btn = document.getElementById('ai-copy');
+    btn.innerHTML = '<i class="ti ti-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i> Copy', 2000);
+  });
+};
+
+// DATE DROPDOWNS INIT
+function initDateDropdowns() {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const currentYear = new Date().getFullYear();
+  ['cal','st'].forEach(prefix => {
+    const dayEl = document.getElementById(prefix+'-day');
+    const monEl = document.getElementById(prefix+'-month');
+    const yrEl  = document.getElementById(prefix+'-year');
+    for (let d=1; d<=31; d++) dayEl.add(new Option(d,String(d).padStart(2,'0')));
+    months.forEach((m,i) => monEl.add(new Option(m, String(i+1).padStart(2,'0'))));
+    for (let y=currentYear; y<=currentYear+3; y++) yrEl.add(new Option(y,y));
+  });
+}
+function getDateValue(prefix) {
+  const d = document.getElementById(prefix+'-day').value;
+  const m = document.getElementById(prefix+'-month').value;
+  const y = document.getElementById(prefix+'-year').value;
+  if (!d||!m||!y) return '';
+  return y+'-'+m+'-'+d;
+}
+function resetDate(prefix) {
+  document.getElementById(prefix+'-day').value='';
+  document.getElementById(prefix+'-month').value='';
+  document.getElementById(prefix+'-year').value='';
+}
+initDateDropdowns();
+
+(async()=>{const {data:{session}}=await sb.auth.getSession();if(session){currentUser=session.user;await loadProfileAndGo();}})();
+</script>
+</body>
+</html>
