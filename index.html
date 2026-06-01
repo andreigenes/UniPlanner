@@ -800,29 +800,14 @@ document.getElementById('pdf-upload').onchange = async (e) => {
   await loadPdfs();
 };
 
-async function readPdfText(fileName) {
+async function downloadPdfAsBase64(fileName) {
   const { data, error } = await sb.storage.from('pdfs').download(fileName);
-  if (error) return '';
+  if (error) return null;
   const arrayBuffer = await data.arrayBuffer();
   const uint8 = new Uint8Array(arrayBuffer);
-  // Extract raw text from PDF (basic extraction)
-  let text = '';
-  const decoder = new TextDecoder('utf-8', { fatal: false });
-  const raw = decoder.decode(uint8);
-  // Extract text between BT/ET blocks
-  const matches = raw.matchAll(/BT[\s\S]*?ET/g);
-  for (const m of matches) {
-    const inner = m[0].match(/\(([^)]+)\)|\[([^\]]+)\]/g) || [];
-    for (const chunk of inner) {
-      text += chunk.replace(/[\(\)\[\]]/g, '') + ' ';
-    }
-  }
-  // Fallback: extract printable ASCII chunks
-  if (text.trim().length < 100) {
-    const chunks = raw.match(/[\x20-\x7E]{4,}/g) || [];
-    text = chunks.filter(c => c.split(' ').length > 2).join(' ');
-  }
-  return text.slice(0, 8000);
+  let binary = '';
+  for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+  return btoa(binary);
 }
 
 document.getElementById('ai-gen').onclick = async () => {
@@ -839,31 +824,46 @@ document.getElementById('ai-gen').onclick = async () => {
   }
 
   wrap.style.display = '';
-  out.textContent = selected.length ? `Reading ${selected.length} PDF(s)...` : 'Generating...';
 
-  let combinedText = '';
+  // Build content array with PDFs as base64 documents
+  const contentParts = [];
+
   for (const name of selected) {
     const shortName = name.replace(/^[^/]+\//, '');
-    out.textContent = `Reading: ${shortName}...`;
-    const text = await readPdfText(name);
-    combinedText += `\n\n--- ${shortName} ---\n${text}`;
+    out.textContent = `Downloading: ${shortName}...`;
+    const b64 = await downloadPdfAsBase64(name);
+    if (b64) {
+      contentParts.push({
+        type: 'document',
+        source: { type: 'base64', media_type: 'application/pdf', data: b64 },
+        title: shortName
+      });
+    }
   }
-  if (extraNotes) combinedText += `\n\n--- Extra notes ---\n${extraNotes}`;
+
+  const tl = {summary:'a concise structured summary with bullet points',defs:'a list of key definitions and formulas, one per line',qa:'10 review questions with short answers',mindmap:'a mind-map structure in text format with main topic and subtopics'}[type];
+
+  let prompt = `Based on the provided course material(s), generate ${tl}.`;
+  if (extraNotes) prompt += `\n\nAdditional notes:\n${extraNotes}`;
+  prompt += '\n\nReply with only the flashcard content, no preamble.';
+  contentParts.push({ type: 'text', text: prompt });
 
   out.textContent = 'Generating flashcard...';
-  const tl = {summary:'a concise structured summary with bullet points',defs:'a list of key definitions and formulas, one per line',qa:'10 review questions with short answers',mindmap:'a mind-map structure in text format with main topic and subtopics'}[type];
   try {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 2000,
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
         system: 'You are an academic assistant for university students. Generate clear, concise study flashcards in English based on the provided course materials.',
-        messages: [{role:'user', content:`Based on these course materials:\n${combinedText}\n\nGenerate ${tl}. Reply with only the flashcard content, no preamble.`}]
+        messages: [{ role: 'user', content: contentParts }]
       })
     });
     const data = await resp.json();
+    if (data.error) { out.textContent = 'API error: ' + data.error.message; return; }
     out.textContent = data.content?.[0]?.text || 'Error generating.';
-  } catch(e) { out.textContent = 'Connection error. Please try again.'; }
+  } catch(e) { out.textContent = 'Connection error: ' + e.message; }
 };
 
 document.getElementById('ai-copy').onclick = () => {
