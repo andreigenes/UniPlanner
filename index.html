@@ -118,6 +118,10 @@
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .icon-btn { background: transparent; border: none; cursor: pointer; color: var(--text-tertiary); padding: 4px; }
   .icon-btn i { font-size: 16px; }
+  .menu-item { display:flex;align-items:center;gap:10px;width:100%;padding:13px 16px;background:transparent;border:none;font-size:14px;color:var(--text-primary);cursor:pointer;text-align:left;font-family:inherit; }
+  .menu-item:hover { background:var(--bg-secondary); }
+  .avatar { width:36px;height:36px;border-radius:50%;background:var(--info-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--info-text);overflow:hidden;flex-shrink:0; }
+  .avatar img { width:100%;height:100%;object-fit:cover; }
 </style>
 </head>
 <body>
@@ -213,9 +217,109 @@
       <div class="nav-title" id="app-title">UniPlanner</div>
       <div class="nav-sub" id="app-sub"></div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <div class="avatar" id="app-avatar">?</div>
-      <button class="icon-btn" id="btn-logout" aria-label="Sign out"><i class="ti ti-logout" style="font-size:20px"></i></button>
+    <div style="position:relative">
+      <div id="app-avatar" style="cursor:pointer" onclick="toggleProfileMenu()">?</div>
+      <div id="profile-menu" style="display:none;position:absolute;right:0;top:44px;background:var(--bg-primary);border:0.5px solid var(--border-md);border-radius:var(--radius-lg);min-width:180px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.15);overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:0.5px solid var(--border)">
+          <div id="menu-name" style="font-size:14px;font-weight:600;color:var(--text-primary)"></div>
+          <div id="menu-email" style="font-size:12px;color:var(--text-secondary);margin-top:2px"></div>
+        </div>
+        <button class="menu-item" onclick="openSettings()"><i class="ti ti-settings"></i> Settings</button>
+        <button class="menu-item" style="color:var(--danger-text)" onclick="doLogout()"><i class="ti ti-logout"></i> Sign out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div id="settings-page" style="display:none;position:fixed;inset:0;background:var(--bg-tertiary);z-index:200;overflow-y:auto">
+    <div style="max-width:480px;margin:0 auto;padding:0 0 40px">
+      <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-primary);border-bottom:0.5px solid var(--border);position:sticky;top:0;z-index:10">
+        <button class="icon-btn" onclick="closeSettings()"><i class="ti ti-arrow-left" style="font-size:20px"></i></button>
+        <span style="font-size:16px;font-weight:600">Settings</span>
+      </div>
+
+      <!-- PROFILE SECTION -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Profile</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <!-- Avatar -->
+          <div style="padding:20px 16px;display:flex;align-items:center;gap:16px;border-bottom:0.5px solid var(--border)">
+            <div style="position:relative">
+              <div id="settings-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--info-bg);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--info-text);overflow:hidden"></div>
+              <label style="position:absolute;bottom:0;right:0;width:22px;height:22px;background:var(--text-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg-primary)">
+                <i class="ti ti-camera" style="font-size:11px;color:var(--bg-primary)"></i>
+                <input type="file" id="avatar-upload" accept="image/*" style="display:none">
+              </label>
+            </div>
+            <div>
+              <div id="settings-name" style="font-size:16px;font-weight:600;color:var(--text-primary)"></div>
+              <div id="settings-faculty" style="font-size:12px;color:var(--text-secondary);margin-top:2px;max-width:240px"></div>
+              <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px" id="settings-year"></div>
+            </div>
+          </div>
+          <!-- Name -->
+          <div style="padding:14px 16px;border-bottom:0.5px solid var(--border)">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Display name</div>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="settings-name-input" style="flex:1;padding:8px 10px;font-size:14px" placeholder="Your name">
+              <button class="btn-sm" id="btn-save-name" style="padding:8px 14px;font-size:13px">Save</button>
+            </div>
+          </div>
+          <!-- Email -->
+          <div style="padding:14px 16px">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Email</div>
+            <div id="settings-email-val" style="font-size:14px;color:var(--text-primary)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCOUNT SECTION -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Account</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <button class="menu-item" style="width:100%;border-radius:0" onclick="changePassword()"><i class="ti ti-lock"></i> Change password</button>
+          <button class="menu-item" style="width:100%;border-radius:0;color:var(--danger-text);border-top:0.5px solid var(--border)" onclick="doLogout()"><i class="ti ti-logout"></i> Sign out</button>
+        </div>
+      </div>
+
+      <!-- ACADEMIC SECTION -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Academic info</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text-secondary)">University</span>
+            <span id="settings-uni" style="font-size:13px;color:var(--text-primary);text-align:right;max-width:200px"></span>
+          </div>
+          <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text-secondary)">City</span>
+            <span id="settings-city" style="font-size:13px;color:var(--text-primary)"></span>
+          </div>
+          <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text-secondary)">Year of study</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <select id="settings-year-sel" style="font-size:13px;padding:4px 8px;width:auto">
+                <option value="1">Year 1</option><option value="2">Year 2</option><option value="3">Year 3</option><option value="4">Year 4</option><option value="5">Year 5</option><option value="6">Year 6</option>
+              </select>
+              <button class="btn-sm" id="btn-save-year" style="padding:6px 12px;font-size:12px">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APP INFO -->
+      <div style="padding:20px 16px 0">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">App</div>
+        <div style="background:var(--bg-primary);border-radius:var(--radius-lg);overflow:hidden;border:0.5px solid var(--border)">
+          <div style="padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between">
+            <span style="font-size:13px;color:var(--text-secondary)">Version</span>
+            <span style="font-size:13px;color:var(--text-primary)">1.0.0</span>
+          </div>
+          <div style="padding:12px 16px;display:flex;justify-content:space-between">
+            <span style="font-size:13px;color:var(--text-secondary)">Built with</span>
+            <span style="font-size:13px;color:var(--text-primary)">Supabase + Claude AI</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -439,9 +543,129 @@ function initAppUI(){
   document.getElementById('app-avatar').textContent=profile.name.slice(0,2).toUpperCase();
   renderAll();
 }
-document.getElementById('btn-logout').onclick=async()=>{
-  await sb.auth.signOut();currentUser=null;profile=null;S.courses=[];S.events=[];S.study=[];show('screen-auth');
+// PROFILE MENU
+function toggleProfileMenu() {
+  const menu = document.getElementById('profile-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', (e) => {
+  const av = document.getElementById('app-avatar');
+  const menu = document.getElementById('profile-menu');
+  if (av && menu && !av.contains(e.target) && !menu.contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser=null;profile=null;S.courses=[];S.events=[];S.study=[];
+  show('screen-auth');
+}
+
+// SETTINGS
+function openSettings() {
+  document.getElementById('profile-menu').style.display = 'none';
+  const p = profile;
+  document.getElementById('settings-name').textContent = p.name;
+  document.getElementById('settings-faculty').textContent = p.faculty;
+  document.getElementById('settings-year').textContent = 'Year ' + p.year;
+  document.getElementById('settings-uni').textContent = p.university;
+  document.getElementById('settings-city').textContent = p.city;
+  document.getElementById('settings-email-val').textContent = currentUser.email;
+  document.getElementById('menu-name').textContent = p.name;
+  document.getElementById('menu-email').textContent = currentUser.email;
+  document.getElementById('settings-name-input').value = p.name;
+  document.getElementById('settings-year-sel').value = p.year;
+  // Avatar
+  updateAvatarDisplay('settings-avatar', p.name, p.avatar_url);
+  document.getElementById('settings-page').style.display = 'block';
+}
+function closeSettings() {
+  document.getElementById('settings-page').style.display = 'none';
+}
+
+function updateAvatarDisplay(elId, name, avatarUrl) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (avatarUrl) {
+    el.innerHTML = `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  } else {
+    el.textContent = (name||'?').slice(0,2).toUpperCase();
+    el.style.background = '';
+  }
+}
+
+function refreshAllAvatars() {
+  updateAvatarDisplay('app-avatar', profile.name, profile.avatar_url);
+  updateAvatarDisplay('settings-avatar', profile.name, profile.avatar_url);
+  document.getElementById('menu-name').textContent = profile.name;
+}
+
+// AVATAR UPLOAD
+document.getElementById('avatar-upload').onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !currentUser) return;
+  const ext = file.name.split('.').pop();
+  const path = currentUser.id + '/avatar.' + ext;
+  const btn = document.querySelector('label[for="avatar-upload"]');
+
+  const { error: upErr } = await sb.storage.from('pdfs').upload(path, file, { upsert: true, contentType: file.type });
+  if (upErr) { alert('Upload failed: ' + upErr.message); return; }
+
+  const { data } = sb.storage.from('pdfs').getPublicUrl(path);
+  // Use signed URL since bucket is private
+  const { data: signedData } = await sb.storage.from('pdfs').createSignedUrl(path, 60*60*24*365);
+  const avatarUrl = signedData?.signedUrl || null;
+
+  const { error: dbErr } = await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', currentUser.id);
+  if (!dbErr) {
+    profile.avatar_url = avatarUrl;
+    refreshAllAvatars();
+    updateAvatarDisplay('settings-avatar', profile.name, avatarUrl);
+  }
+  e.target.value = '';
 };
+
+// SAVE NAME
+document.getElementById('btn-save-name').onclick = async () => {
+  const name = document.getElementById('settings-name-input').value.trim();
+  if (!name) return;
+  const btn = document.getElementById('btn-save-name');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  const { error } = await sb.from('profiles').update({ name }).eq('id', currentUser.id);
+  btn.textContent = 'Save'; btn.disabled = false;
+  if (!error) {
+    profile.name = name;
+    document.getElementById('app-title').textContent = name + "'s planner";
+    document.getElementById('settings-name').textContent = name;
+    document.getElementById('menu-name').textContent = name;
+    refreshAllAvatars();
+    btn.textContent = 'Saved ✓';
+    setTimeout(() => btn.textContent = 'Save', 2000);
+  }
+};
+
+// SAVE YEAR
+document.getElementById('btn-save-year').onclick = async () => {
+  const year = parseInt(document.getElementById('settings-year-sel').value);
+  const btn = document.getElementById('btn-save-year');
+  btn.textContent = '...'; btn.disabled = true;
+  const { error } = await sb.from('profiles').update({ year }).eq('id', currentUser.id);
+  btn.textContent = 'Save'; btn.disabled = false;
+  if (!error) {
+    profile.year = year;
+    document.getElementById('settings-year').textContent = 'Year ' + year;
+    btn.textContent = '✓';
+    setTimeout(() => btn.textContent = 'Save', 2000);
+  }
+};
+
+// CHANGE PASSWORD
+function changePassword() {
+  const email = currentUser.email;
+  sb.auth.resetPasswordForEmail(email).then(() => alert('Password reset email sent to ' + email));
+  closeSettings();
+}
 
 document.querySelectorAll('.bnav-btn').forEach(btn=>{
   btn.onclick=()=>{
