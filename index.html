@@ -53,9 +53,10 @@
   .field { margin-bottom: 16px; }
   .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
   .field input, .field select, input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], select, textarea {
-    width: 100%; padding: 10px 12px; font-size: 15px; border: 0.5px solid var(--border-md); border-radius: var(--radius-md);
-    background: var(--bg-primary); color: var(--text-primary); outline: none; font-family: inherit;
+    width: 100%; max-width: 100%; padding: 10px 12px; font-size: 15px; border: 0.5px solid var(--border-md); border-radius: var(--radius-md);
+    background: var(--bg-primary); color: var(--text-primary); outline: none; font-family: inherit; box-sizing: border-box;
   }
+  input[type="date"] { -webkit-appearance: textfield; min-width: 0; }
   input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(55,138,221,0.15); }
   .btn-full { width: 100%; padding: 13px; font-size: 15px; border-radius: var(--radius-md); border: none; background: var(--text-primary); color: var(--bg-primary); cursor: pointer; font-weight: 600; margin-top: 4px; font-family: inherit; }
   .btn-full:hover { opacity: .87; }
