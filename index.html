@@ -426,7 +426,7 @@ document.querySelectorAll('.bnav-btn').forEach(btn=>{
   };
 });
 
-function gpa(courses){const ok=courses.filter(c=>c.grade&&parseFloat(c.grade)>=5);if(!ok.length)return null;const sp=ok.reduce((a,c)=>a+parseFloat(c.grade)*parseInt(c.credits),0);const sc=ok.reduce((a,c)=>a+parseInt(c.credits),0);return sc?(sp/sc).toFixed(2):null;}
+function gpa(courses){const all=courses.filter(c=>c.grade);if(!all.length)return null;const sp=all.reduce((a,c)=>a+parseFloat(c.grade)*parseInt(c.credits),0);const sc=all.reduce((a,c)=>a+parseInt(c.credits),0);return sc?(sp/sc).toFixed(2):null;}
 function earned(courses){return courses.filter(c=>c.grade&&parseFloat(c.grade)>=5).reduce((a,c)=>a+parseInt(c.credits),0);}
 
 function renderCredits(){
