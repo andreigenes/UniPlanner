@@ -608,7 +608,7 @@ document.getElementById('avatar-upload').onchange = async (e) => {
   const file = e.target.files[0];
   if (!file || !currentUser) return;
   const ext = file.name.split('.').pop();
-  const path = currentUser.id + '/avatar.' + ext;
+  const path = currentUser.id + '/avatars/avatar.' + ext;
   const btn = document.querySelector('label[for="avatar-upload"]');
 
   const { error: upErr } = await sb.storage.from('pdfs').upload(path, file, { upsert: true, contentType: file.type });
@@ -755,7 +755,7 @@ async function loadPdfs() {
   if (!currentUser) return;
   const { data, error } = await sb.storage.from('pdfs').list(currentUser.id + '/');
   if (error) { console.error(error); return; }
-  userPdfs = data || [];
+  userPdfs = (data || []).filter(f => f.name.toLowerCase().endsWith('.pdf'));
   renderPdfList();
 }
 
